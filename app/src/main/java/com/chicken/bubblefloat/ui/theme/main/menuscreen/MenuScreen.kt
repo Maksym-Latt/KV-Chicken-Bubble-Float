@@ -51,7 +51,7 @@ fun MenuScreen(
     onStartGame: () -> Unit,
     lastResult: RunSummary?,
     bestHeight: Int,
-    bestBubbles: Int,
+    bestEggs: Int,
     onOpenSettings: () -> Unit,
     onOpenRecords: () -> Unit
 ) {
@@ -85,7 +85,7 @@ fun MenuScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    RecordsPreview(bestHeight = bestHeight, bestBubbles = bestBubbles)
+                    RecordsPreview(bestHeight = bestHeight, bestEggs = bestEggs)
                 }
 
                 Column(
@@ -115,7 +115,7 @@ fun MenuScreen(
 
                     if (lastResult != null) {
                         Text(
-                            text = "Last flight: ${lastResult.heightMeters} m • ${lastResult.bubbles} bubbles",
+                            text = "Last flight: ${lastResult.heightMeters} m • ${lastResult.eggs} eggs",
                             textAlign = TextAlign.Center,
                             color = Color(0xFF39506B),
                             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
@@ -131,19 +131,28 @@ fun MenuScreen(
 
 @Composable
 private fun FloatingChickenBubble() {
-
-    Image(
-        painter = painterResource(id = R.drawable.chicken_1),
-        contentDescription = null,
+    Box(
         modifier = Modifier
-            .size(160.dp),
-        contentScale = ContentScale.Fit
-    )
-
+            .size(180.dp)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.radialGradient(
+                    listOf(Color(0x66FFFFFF), Color(0x339ADFFF), Color.Transparent)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.chicken_1_happy),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(0.8f),
+            contentScale = ContentScale.Fit
+        )
+    }
 }
 
 @Composable
-private fun RecordsPreview(bestHeight: Int, bestBubbles: Int) {
+private fun RecordsPreview(bestHeight: Int, bestEggs: Int) {
     Column(
         modifier = Modifier
             .width(140.dp)
@@ -171,7 +180,7 @@ private fun RecordsPreview(bestHeight: Int, bestBubbles: Int) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Bubbles: $bestBubbles",
+            text = "Eggs: $bestEggs",
             color = Color(0xFF274653),
             fontSize = 14.sp,
             textAlign = TextAlign.Center

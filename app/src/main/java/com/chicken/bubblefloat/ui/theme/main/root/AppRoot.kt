@@ -61,7 +61,7 @@ fun AppRoot(
                             },
                             lastResult = ui.lastRun,
                             bestHeight = ui.bestHeight,
-                            bestBubbles = ui.bestBubbles,
+                            bestEggs = ui.bestEggs,
                             onOpenSettings = { showMenuSettings = true },
                             onOpenRecords = { showMenuRecords = true }
                         )
@@ -75,7 +75,7 @@ fun AppRoot(
                         if (showMenuRecords) {
                             MenuRecordsOverlay(
                                 bestHeight = ui.bestHeight,
-                                bestBubbles = ui.bestBubbles,
+                                bestEggs = ui.bestEggs,
                                 onClose = { showMenuRecords = false }
                             )
                         }

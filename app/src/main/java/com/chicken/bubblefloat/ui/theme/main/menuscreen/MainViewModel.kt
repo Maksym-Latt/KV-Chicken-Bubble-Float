@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 data class RunSummary(
     val heightMeters: Int,
-    val bubbles: Int
+    val eggs: Int
 )
 
 @HiltViewModel
@@ -22,7 +22,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
         val screen: Screen = Screen.Menu,
         val lastRun: RunSummary? = null,
         val bestHeight: Int = 0,
-        val bestBubbles: Int = 0
+        val bestEggs: Int = 0
     )
 
     private val _ui = MutableStateFlow(UiState())
@@ -38,7 +38,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
                 screen = Screen.Menu,
                 lastRun = result,
                 bestHeight = maxOf(current.bestHeight, result.heightMeters),
-                bestBubbles = maxOf(current.bestBubbles, result.bubbles)
+                bestEggs = maxOf(current.bestEggs, result.eggs)
             )
         }
     }

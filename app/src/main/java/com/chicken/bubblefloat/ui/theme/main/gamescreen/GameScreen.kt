@@ -3,6 +3,7 @@ package com.chicken.bubblefloat.ui.main.gamescreen
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -64,7 +65,6 @@ import com.chicken.bubblefloat.ui.main.gamescreen.overlay.GameSettingsOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.IntroOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.WinOverlay
 import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
-import kotlin.math.roundToInt
 
 @Composable
 fun GameScreen(
@@ -112,7 +112,7 @@ fun GameScreen(
     }
 
     var lastLives by remember { mutableStateOf(state.lives) }
-    var lastCoins by remember { mutableStateOf(state.coins) }
+    var lastEggs by remember { mutableStateOf(state.eggs) }
     var lastInvincible by remember { mutableStateOf(state.invincibleMillis) }
 
     LaunchedEffect(state.lives) {
@@ -122,11 +122,11 @@ fun GameScreen(
         lastLives = state.lives
     }
 
-    LaunchedEffect(state.coins) {
-        if (state.coins > lastCoins) {
-            audio.playChickenEscape()
+    LaunchedEffect(state.eggs) {
+        if (state.eggs > lastEggs) {
+            audio.playChickenPickup()
         }
-        lastCoins = state.coins
+        lastEggs = state.eggs
     }
 
     LaunchedEffect(state.invincibleMillis) {
@@ -136,8 +136,8 @@ fun GameScreen(
         lastInvincible = state.invincibleMillis
     }
 
-    val summary = remember(state.heightRounded, state.coins) {
-        RunSummary(heightMeters = state.heightRounded, bubbles = state.coins)
+    val summary = remember(state.heightRounded, state.eggs) {
+        RunSummary(heightMeters = state.heightRounded, eggs = state.eggs)
     }
 
     BackHandler {
@@ -168,7 +168,7 @@ fun GameScreen(
             ) {
                 GameHud(
                     lives = state.lives,
-                    coins = state.coins,
+                    eggs = state.eggs,
                     height = state.heightRounded,
                     invincibleProgress = state.invincibilityProgress,
                     isInvincible = state.invincibleMillis > 0,
@@ -181,7 +181,6 @@ fun GameScreen(
                     playerX = state.playerX,
                     obstacles = state.obstacles,
                     collectibles = state.collectibles,
-                    invincible = state.invincibleMillis > 0,
                     onControl = viewModel::movePlayer
                 )
             }
@@ -220,7 +219,7 @@ fun GameScreen(
 @Composable
 private fun GameHud(
     lives: Int,
-    coins: Int,
+    eggs: Int,
     height: Int,
     invincibleProgress: Float,
     isInvincible: Boolean,
@@ -242,21 +241,20 @@ private fun GameHud(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            HeartRow(lives = lives)
+            HeartStatus(
+                lives = lives,
+                isInvincible = isInvincible,
+                invincibleProgress = invincibleProgress
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            CoinBadge(coins = coins)
+            EggCounter(eggs = eggs)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         HeightBadge(height = height)
-
-        if (isInvincible) {
-            Spacer(modifier = Modifier.height(8.dp))
-            RainbowBadge(progress = invincibleProgress)
-        }
     }
 }
 
@@ -276,25 +274,26 @@ private fun HeartRow(lives: Int) {
 }
 
 @Composable
-private fun CoinBadge(coins: Int) {
+private fun EggCounter(eggs: Int) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xAAFFFFFF))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color(0xD0FFFFFF))
+            .padding(horizontal = 18.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.item_bubble),
+            painter = painterResource(id = R.drawable.item_egg),
             contentDescription = null,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(30.dp)
         )
         Text(
-            text = coins.toString(),
+            text = eggs.toString(),
             color = Color(0xFF16435C),
             fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
+            fontSize = 20.sp,
+            maxLines = 1
         )
     }
 }
@@ -309,31 +308,47 @@ private fun HeightBadge(height: Int) {
 }
 
 @Composable
-private fun RainbowBadge(progress: Float) {
-    val display = (progress * 100).roundToInt().coerceAtMost(100)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.horizontalGradient(
-                    listOf(Color(0xFFFFF1FB), Color(0xFFC9F6FF))
-                )
+private fun HeartStatus(
+    lives: Int,
+    isInvincible: Boolean,
+    invincibleProgress: Float
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        HeartRow(lives = lives)
+        if (isInvincible) {
+            BubbleShieldBar(progress = invincibleProgress)
+        }
+    }
+}
+
+@Composable
+private fun BubbleShieldBar(progress: Float) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = "Bubble shield",
+            color = Color(0xFF3B4B73),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Box(
+            modifier = Modifier
+                .widthIn(min = 120.dp)
+                .height(12.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(Color(0x33FFFFFF))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(Color(0xFFFFD9F7), Color(0xFF8FE6FF))
+                        )
+                    )
             )
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Rainbow bubble",
-            color = Color(0xFF3B4B73),
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "$display%",
-            color = Color(0xFF3B4B73),
-            fontWeight = FontWeight.Bold
-        )
+        }
     }
 }
 
@@ -342,7 +357,6 @@ private fun GamePlayfield(
     playerX: Float,
     obstacles: List<GameViewModel.Obstacle>,
     collectibles: List<GameViewModel.Collectible>,
-    invincible: Boolean,
     onControl: (Float) -> Unit
 ) {
     BoxWithConstraints(
@@ -418,7 +432,6 @@ private fun GamePlayfield(
         )
 
         PlayerBubble(
-            invincible = invincible,
             modifier = Modifier
                 .offset(playerPlacement.first, playerPlacement.second)
                 .size(playerPlacement.third, playerPlacement.fourth)
@@ -472,27 +485,18 @@ private fun ObstacleSprite(type: GameEngine.ObstacleType, modifier: Modifier) {
             contentDescription = null,
             modifier = modifier
         )
-        GameEngine.ObstacleType.Branch -> Box(
-            modifier = modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(Color(0xFF6B4F2A), Color(0xFF936A3B))
-                    )
-                )
-        )
     }
 }
 
 @Composable
 private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifier) {
     when (type) {
-        GameEngine.CollectibleType.Bubble -> Image(
-            painter = painterResource(id = R.drawable.item_bubble),
+        GameEngine.CollectibleType.Egg -> Image(
+            painter = painterResource(id = R.drawable.item_egg),
             contentDescription = null,
             modifier = modifier
         )
-        GameEngine.CollectibleType.Rainbow -> Box(
+        GameEngine.CollectibleType.Bubble -> Box(
             modifier = modifier
                 .clip(CircleShape)
                 .background(
@@ -500,19 +504,42 @@ private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifi
                         listOf(Color(0xFFFFF1FF), Color(0xFF92E0FF), Color.Transparent),
                         center = Offset(0.3f, 0.3f)
                     )
-                )
-        )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.item_bubble),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.7f)
+            )
+        }
     }
 }
 
 @Composable
-private fun PlayerBubble(invincible: Boolean, modifier: Modifier) {
+private fun PlayerBubble(modifier: Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0x66FFFFFF), Color(0x338DE5FF), Color.Transparent),
+                        center = Offset(0.3f, 0.3f)
+                    )
+                )
+                .border(2.dp, Color(0x80FFFFFF), CircleShape)
+        )
 
         Image(
             painter = painterResource(id = R.drawable.chicken_1),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.8f),
+            modifier = Modifier.fillMaxSize(0.75f),
             contentScale = ContentScale.Fit
         )
-
+    }
 }
