@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -66,13 +65,16 @@ import com.chicken.bubblefloat.ui.main.gamescreen.overlay.GameSettingsOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.IntroOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.WinOverlay
 import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
+import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
 
 @Composable
 fun GameScreen(
     onExitToMenu: (RunSummary) -> Unit,
-    viewModel: GameViewModel = hiltViewModel()
+    viewModel: GameViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val settingsUi by settingsViewModel.ui.collectAsStateWithLifecycle()
     val audio = rememberAudioController()
     val lifecycleOwner = LocalLifecycleOwner.current
     var exitingToMenu by remember { mutableStateOf(false) }
@@ -182,7 +184,8 @@ fun GameScreen(
                     playerX = state.playerX,
                     obstacles = state.obstacles,
                     collectibles = state.collectibles,
-                    onControl = viewModel::movePlayer
+                    onControl = viewModel::movePlayer,
+                    showDebugHitboxes = settingsUi.debugHitboxesEnabled
                 )
             }
 
@@ -357,7 +360,8 @@ private fun GamePlayfield(
     playerX: Float,
     obstacles: List<GameViewModel.Obstacle>,
     collectibles: List<GameViewModel.Collectible>,
-    onControl: (Float) -> Unit
+    onControl: (Float) -> Unit,
+    showDebugHitboxes: Boolean
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -395,12 +399,19 @@ private fun GamePlayfield(
                 height = obstacle.height,
                 density = density
             )
+            val spriteModifier = Modifier
+                .offset(placement.first, placement.second)
+                .size(placement.third, placement.fourth)
             ObstacleSprite(
                 type = obstacle.type,
-                modifier = Modifier
-                    .offset(placement.first, placement.second)
-                    .size(placement.third, placement.fourth)
+                modifier = spriteModifier
             )
+            if (showDebugHitboxes) {
+                DebugHitbox(
+                    modifier = spriteModifier,
+                    color = Color(0xFFFF4D4D)
+                )
+            }
         }
 
         collectibles.forEach { collectible ->
@@ -413,12 +424,19 @@ private fun GamePlayfield(
                 height = collectible.height,
                 density = density
             )
+            val spriteModifier = Modifier
+                .offset(placement.first, placement.second)
+                .size(placement.third, placement.fourth)
             CollectibleSprite(
                 type = collectible.type,
-                modifier = Modifier
-                    .offset(placement.first, placement.second)
-                    .size(placement.third, placement.fourth)
+                modifier = spriteModifier
             )
+            if (showDebugHitboxes) {
+                DebugHitbox(
+                    modifier = spriteModifier,
+                    color = Color(0xFF00FFA3)
+                )
+            }
         }
 
         val playerPlacement = calculatePlacement(
@@ -431,11 +449,19 @@ private fun GamePlayfield(
             density = density
         )
 
-        PlayerBubble(
-            modifier = Modifier
-                .offset(playerPlacement.first, playerPlacement.second)
-                .size(playerPlacement.third, playerPlacement.fourth)
+        val playerModifier = Modifier
+            .offset(playerPlacement.first, playerPlacement.second)
+            .size(playerPlacement.third, playerPlacement.fourth)
+
+        PlayerSprite(
+            modifier = playerModifier
         )
+        if (showDebugHitboxes) {
+            DebugHitbox(
+                modifier = playerModifier,
+                color = Color(0xFF4DB2FF)
+            )
+        }
     }
 }
 
@@ -517,7 +543,7 @@ private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifi
 }
 
 @Composable
-private fun PlayerBubble(modifier: Modifier) {
+private fun PlayerSprite(modifier: Modifier) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
@@ -525,8 +551,15 @@ private fun PlayerBubble(modifier: Modifier) {
         Image(
             painter = painterResource(id = R.drawable.chicken_1),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.75f),
+            modifier = Modifier.fillMaxSize(0.85f),
             contentScale = ContentScale.Fit
         )
     }
+}
+
+@Composable
+private fun DebugHitbox(modifier: Modifier, color: Color) {
+    Box(
+        modifier = modifier.border(1.5.dp, color, RoundedCornerShape(2.dp))
+    )
 }

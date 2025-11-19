@@ -1,6 +1,13 @@
 package com.chicken.bubblefloat.game
 
 import android.os.SystemClock
+import com.chicken.bubblefloat.game.GameDimensions.BUBBLE_SIZE
+import com.chicken.bubblefloat.game.GameDimensions.CROW_HEIGHT
+import com.chicken.bubblefloat.game.GameDimensions.CROW_WIDTH
+import com.chicken.bubblefloat.game.GameDimensions.EGG_SIZE
+import com.chicken.bubblefloat.game.GameDimensions.PLAYER_SIZE
+import com.chicken.bubblefloat.game.GameDimensions.THORN_HEIGHT
+import com.chicken.bubblefloat.game.GameDimensions.THORN_WIDTH
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -258,8 +265,8 @@ class GameEngine(
             else -> ObstacleType.Crow
         }
         val (width, height) = when (type) {
-            ObstacleType.Thorns -> 0.2f to 0.2f
-            ObstacleType.Crow -> 0.25f to 0.22f
+            ObstacleType.Thorns -> THORN_WIDTH to THORN_HEIGHT
+            ObstacleType.Crow -> CROW_WIDTH to CROW_HEIGHT
         }
         val half = width / 2f
         val x = random.nextFloat().coerceIn(half, 1f - half)
@@ -278,13 +285,13 @@ class GameEngine(
         val baseX = random.nextFloat().coerceIn(0.15f, 0.85f)
         val count = 3
         repeat(count) { index ->
-            val offset = (index - (count - 1) / 2f) * 0.12f
+            val offset = (index - (count - 1) / 2f) * (EGG_SIZE + 0.01f)
             activeCollectibles += ActiveCollectible(
                 id = nextId++,
-                x = (baseX + offset).coerceIn(0.12f, 0.88f),
+                x = (baseX + offset).coerceIn(EGG_SIZE / 2f, 1f - EGG_SIZE / 2f),
                 y = 1.1f + random.nextFloat() * 0.3f,
-                width = 0.12f,
-                height = 0.12f,
+                width = EGG_SIZE,
+                height = EGG_SIZE,
                 type = CollectibleType.Egg
             )
         }
@@ -293,10 +300,10 @@ class GameEngine(
     private fun spawnBubble() {
         activeCollectibles += ActiveCollectible(
             id = nextId++,
-            x = random.nextFloat().coerceIn(0.2f, 0.8f),
+            x = random.nextFloat().coerceIn(BUBBLE_SIZE / 2f, 1f - BUBBLE_SIZE / 2f),
             y = 1.1f + random.nextFloat() * 0.3f,
-            width = 0.16f,
-            height = 0.16f,
+            width = BUBBLE_SIZE,
+            height = BUBBLE_SIZE,
             type = CollectibleType.Bubble
         )
     }
@@ -399,14 +406,14 @@ class GameEngine(
     companion object {
         const val MAX_LIVES = 3
         const val PLAYER_Y = 0.2f
-        const val PLAYER_SIZE = 0.22f
+        const val PLAYER_SIZE = GameDimensions.PLAYER_SIZE
         const val POWERUP_DURATION = 5_000L
 
         private const val PLAYER_START_X = 0.5f
         private const val PLAYER_MOVE_SPEED = 1.5f
-        private const val BASE_SPEED = 1.3f
-        private const val MAX_SPEED = 3.8f
-        private const val SPEED_ACCELERATION = 0.18f
+        private const val BASE_SPEED = 1.05f
+        private const val MAX_SPEED = 3.0f
+        private const val SPEED_ACCELERATION = 0.12f
         private const val SPAWN_STEP_METERS = 1.7f
         private const val EGG_ROW_CHANCE = 0.7f
         private const val BUBBLE_STEP_METERS = 9f

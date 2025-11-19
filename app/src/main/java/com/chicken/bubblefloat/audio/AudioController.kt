@@ -7,8 +7,8 @@ interface AudioController {
     fun pauseMusic()
     fun resumeMusic()
 
-    fun setMusicVolume(percent: Int)
-    fun setSoundVolume(percent: Int)
+    fun setMusicEnabled(enabled: Boolean)
+    fun setSoundEnabled(enabled: Boolean)
 
     fun playGameWin()
     fun playChickenHit()

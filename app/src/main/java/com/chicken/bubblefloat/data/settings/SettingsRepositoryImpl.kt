@@ -10,20 +10,43 @@ class SettingsRepositoryImpl @Inject constructor(
 ) : SettingsRepository {
 
     private companion object {
-        const val KEY_MUSIC = "music_volume"
-        const val KEY_SOUND = "sound_volume"
+        const val KEY_MUSIC_ENABLED = "music_enabled"
+        const val KEY_SOUND_ENABLED = "sound_enabled"
+        const val KEY_DEBUG_ENABLED = "debug_hitboxes"
+
+        const val KEY_LEGACY_MUSIC = "music_volume"
+        const val KEY_LEGACY_SOUND = "sound_volume"
         const val DEF_MUSIC = 70
         const val DEF_SOUND = 80
     }
 
-    override fun getMusicVolume(): Int = prefs.getInt(KEY_MUSIC, DEF_MUSIC)
-    override fun getSoundVolume(): Int = prefs.getInt(KEY_SOUND, DEF_SOUND)
-
-    override fun setMusicVolume(value: Int) {
-        prefs.edit().putInt(KEY_MUSIC, value.coerceIn(0, 100)).apply()
+    override fun isMusicEnabled(): Boolean {
+        return if (prefs.contains(KEY_MUSIC_ENABLED)) {
+            prefs.getBoolean(KEY_MUSIC_ENABLED, true)
+        } else {
+            prefs.getInt(KEY_LEGACY_MUSIC, DEF_MUSIC) > 0
+        }
     }
 
-    override fun setSoundVolume(value: Int) {
-        prefs.edit().putInt(KEY_SOUND, value.coerceIn(0, 100)).apply()
+    override fun isSoundEnabled(): Boolean {
+        return if (prefs.contains(KEY_SOUND_ENABLED)) {
+            prefs.getBoolean(KEY_SOUND_ENABLED, true)
+        } else {
+            prefs.getInt(KEY_LEGACY_SOUND, DEF_SOUND) > 0
+        }
+    }
+
+    override fun isDebugEnabled(): Boolean = prefs.getBoolean(KEY_DEBUG_ENABLED, false)
+
+    override fun setMusicEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_MUSIC_ENABLED, enabled).apply()
+    }
+
+    override fun setSoundEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SOUND_ENABLED, enabled).apply()
+    }
+
+    override fun setDebugEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEBUG_ENABLED, enabled).apply()
     }
 }
