@@ -19,7 +19,7 @@ import com.chicken.bubblefloat.ui.main.gamescreen.GameScreen
 import com.chicken.bubblefloat.ui.main.menuscreen.MainViewModel
 import com.chicken.bubblefloat.ui.main.menuscreen.MenuScreen
 import com.chicken.bubblefloat.ui.main.menuscreen.overlay.SettingsOverlay
-import com.chicken.bubblefloat.ui.main.menuscreen.overlay.MenuRecordsOverlay
+import com.chicken.bubblefloat.ui.main.menuscreen.overlay.LockerOverlay
 
 @Composable
 fun AppRoot(
@@ -27,15 +27,13 @@ fun AppRoot(
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     var showMenuSettings by rememberSaveable { mutableStateOf(false) }
-    var showMenuPrivacy by rememberSaveable { mutableStateOf(false) }
-    var showMenuRecords by rememberSaveable { mutableStateOf(false) }
+    var showLocker by rememberSaveable { mutableStateOf(false) }
     val audio = rememberAudioController()
 
     LaunchedEffect(ui.screen) {
         if (ui.screen != MainViewModel.Screen.Menu) {
             showMenuSettings = false
-            showMenuPrivacy = false
-            showMenuRecords = false
+            showLocker = false
         }
         when (ui.screen) {
             MainViewModel.Screen.Menu -> audio.playMenuMusic()
@@ -55,15 +53,16 @@ fun AppRoot(
                         MenuScreen(
                             onStartGame = {
                                 showMenuSettings = false
-                                showMenuPrivacy = false
-                                showMenuRecords = false
+                                showLocker = false
                                 vm.startGame()
                             },
                             lastResult = ui.lastRun,
                             bestHeight = ui.bestHeight,
                             bestEggs = ui.bestEggs,
+                            totalEggs = ui.totalEggs,
+                            selectedSkinId = ui.selectedSkinId,
                             onOpenSettings = { showMenuSettings = true },
-                            onOpenRecords = { showMenuRecords = true }
+                            onOpenLocker = { showLocker = true }
                         )
 
                         if (showMenuSettings) {
@@ -72,18 +71,24 @@ fun AppRoot(
                             )
                         }
 
-                        if (showMenuRecords) {
-                            MenuRecordsOverlay(
-                                bestHeight = ui.bestHeight,
-                                bestEggs = ui.bestEggs,
-                                onClose = { showMenuRecords = false }
+                        if (showLocker) {
+                            LockerOverlay(
+                                eggs = ui.totalEggs,
+                                selectedSkinId = ui.selectedSkinId,
+                                ownedSkins = ui.ownedSkins,
+                                onSelectSkin = { skinId ->
+                                    vm.selectSkin(skinId)
+                                },
+                                onBuySkin = { skin -> vm.purchaseSkin(skin) },
+                                onClose = { showLocker = false }
                             )
                         }
                     }
 
                 MainViewModel.Screen.Game ->
                     GameScreen(
-                        onExitToMenu = vm::backToMenu
+                        onExitToMenu = vm::backToMenu,
+                        selectedSkinId = ui.selectedSkinId
                     )
             }
         }

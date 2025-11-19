@@ -2,6 +2,8 @@ package com.chicken.bubblefloat.data.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.chicken.bubblefloat.data.progress.ProgressRepository
+import com.chicken.bubblefloat.data.progress.ProgressRepositoryImpl
 import com.chicken.bubblefloat.data.settings.SettingsRepository
 import com.chicken.bubblefloat.data.settings.SettingsRepositoryImpl
 import dagger.Binds
@@ -33,4 +35,10 @@ abstract class SettingsDataModule {
     abstract fun bindSettingsRepository(
         impl: SettingsRepositoryImpl
     ): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProgressRepository(
+        impl: ProgressRepositoryImpl
+    ): ProgressRepository
 }

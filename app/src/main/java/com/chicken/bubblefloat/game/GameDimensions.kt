@@ -1,14 +1,15 @@
 package com.chicken.bubblefloat.game
 
 object GameDimensions {
-    const val PLAYER_SIZE = 0.26f
 
-    const val THORN_WIDTH = 0.22f
-    const val THORN_HEIGHT = 0.22f
+    data class Element(
+        val spriteSize: Float,
+        val hitboxScale: Float = 0.7f
+    )
 
-    const val CROW_WIDTH = 0.3f
-    const val CROW_HEIGHT = 0.24f
-
-    const val EGG_SIZE = 0.13f
-    const val BUBBLE_SIZE = 0.18f
+    val Player = Element(spriteSize = 0.26f, hitboxScale = 0.75f)
+    val Thorn = Element(spriteSize = 0.22f)
+    val Crow = Element(spriteSize = 0.3f, hitboxScale = 0.65f)
+    val Egg = Element(spriteSize = 0.13f, hitboxScale = 0.8f)
+    val Bubble = Element(spriteSize = 0.18f, hitboxScale = 0.85f)
 }

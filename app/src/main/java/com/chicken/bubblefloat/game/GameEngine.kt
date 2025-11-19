@@ -1,13 +1,11 @@
 package com.chicken.bubblefloat.game
 
 import android.os.SystemClock
-import com.chicken.bubblefloat.game.GameDimensions.BUBBLE_SIZE
-import com.chicken.bubblefloat.game.GameDimensions.CROW_HEIGHT
-import com.chicken.bubblefloat.game.GameDimensions.CROW_WIDTH
-import com.chicken.bubblefloat.game.GameDimensions.EGG_SIZE
-import com.chicken.bubblefloat.game.GameDimensions.PLAYER_SIZE
-import com.chicken.bubblefloat.game.GameDimensions.THORN_HEIGHT
-import com.chicken.bubblefloat.game.GameDimensions.THORN_WIDTH
+import com.chicken.bubblefloat.game.GameDimensions.Bubble
+import com.chicken.bubblefloat.game.GameDimensions.Crow
+import com.chicken.bubblefloat.game.GameDimensions.Egg
+import com.chicken.bubblefloat.game.GameDimensions.Player
+import com.chicken.bubblefloat.game.GameDimensions.Thorn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -89,8 +87,8 @@ class GameEngine(
         val id: Int,
         var x: Float,
         var y: Float,
-        val width: Float,
-        val height: Float,
+        val size: Float,
+        val hitboxScale: Float,
         val type: ObstacleType
     )
 
@@ -98,8 +96,8 @@ class GameEngine(
         val id: Int,
         var x: Float,
         var y: Float,
-        val width: Float,
-        val height: Float,
+        val size: Float,
+        val hitboxScale: Float,
         val type: CollectibleType
     )
 
@@ -219,7 +217,7 @@ class GameEngine(
     }
 
     private fun handleCollisions() {
-        val playerHalf = PLAYER_SIZE / 2f
+        val playerHalf = PLAYER_SIZE * PLAYER_HITBOX_SCALE / 2f
         val playerRect = Rect(
             left = playerX - playerHalf,
             right = playerX + playerHalf,
@@ -254,8 +252,8 @@ class GameEngine(
     }
 
     private fun removeOffscreen() {
-        activeObstacles.removeAll { it.y + it.height / 2f < -REMOVAL_MARGIN }
-        activeCollectibles.removeAll { it.y + it.height / 2f < -REMOVAL_MARGIN }
+        activeObstacles.removeAll { it.y + it.size / 2f < -REMOVAL_MARGIN }
+        activeCollectibles.removeAll { it.y + it.size / 2f < -REMOVAL_MARGIN }
     }
 
     private fun spawnObstacle() {
@@ -264,10 +262,11 @@ class GameEngine(
             roll < 0.55f -> ObstacleType.Thorns
             else -> ObstacleType.Crow
         }
-        val (width, height) = when (type) {
-            ObstacleType.Thorns -> THORN_WIDTH to THORN_HEIGHT
-            ObstacleType.Crow -> CROW_WIDTH to CROW_HEIGHT
+        val config = when (type) {
+            ObstacleType.Thorns -> Thorn
+            ObstacleType.Crow -> Crow
         }
+        val width = config.spriteSize
         val half = width / 2f
         val x = random.nextFloat().coerceIn(half, 1f - half)
         val y = 1.2f + random.nextFloat() * 0.4f
@@ -275,35 +274,37 @@ class GameEngine(
             id = nextId++,
             x = x,
             y = y,
-            width = width,
-            height = height,
+            size = config.spriteSize,
+            hitboxScale = config.hitboxScale,
             type = type
         )
     }
 
     private fun spawnEggCluster() {
+        val eggSize = Egg.spriteSize
         val baseX = random.nextFloat().coerceIn(0.15f, 0.85f)
         val count = 3
         repeat(count) { index ->
-            val offset = (index - (count - 1) / 2f) * (EGG_SIZE + 0.01f)
+            val offset = (index - (count - 1) / 2f) * (eggSize + 0.01f)
             activeCollectibles += ActiveCollectible(
                 id = nextId++,
-                x = (baseX + offset).coerceIn(EGG_SIZE / 2f, 1f - EGG_SIZE / 2f),
+                x = (baseX + offset).coerceIn(eggSize / 2f, 1f - eggSize / 2f),
                 y = 1.1f + random.nextFloat() * 0.3f,
-                width = EGG_SIZE,
-                height = EGG_SIZE,
+                size = eggSize,
+                hitboxScale = Egg.hitboxScale,
                 type = CollectibleType.Egg
             )
         }
     }
 
     private fun spawnBubble() {
+        val config = Bubble
         activeCollectibles += ActiveCollectible(
             id = nextId++,
-            x = random.nextFloat().coerceIn(BUBBLE_SIZE / 2f, 1f - BUBBLE_SIZE / 2f),
+            x = random.nextFloat().coerceIn(config.spriteSize / 2f, 1f - config.spriteSize / 2f),
             y = 1.1f + random.nextFloat() * 0.3f,
-            width = BUBBLE_SIZE,
-            height = BUBBLE_SIZE,
+            size = config.spriteSize,
+            hitboxScale = config.hitboxScale,
             type = CollectibleType.Bubble
         )
     }
@@ -353,8 +354,8 @@ class GameEngine(
         id = id,
         x = x,
         y = y,
-        width = width,
-        height = height,
+        width = size,
+        height = size,
         type = type
     )
 
@@ -362,8 +363,8 @@ class GameEngine(
         id = id,
         x = x,
         y = y,
-        width = width,
-        height = height,
+        width = size,
+        height = size,
         type = type
     )
 
@@ -382,31 +383,30 @@ class GameEngine(
     }
 
     private fun ActiveObstacle.toRect(): Rect {
-        val halfW = width / 2f
-        val halfH = height / 2f
+        val half = size * hitboxScale / 2f
         return Rect(
-            left = x - halfW,
-            right = x + halfW,
-            bottom = y - halfH,
-            top = y + halfH
+            left = x - half,
+            right = x + half,
+            bottom = y - half,
+            top = y + half
         )
     }
 
     private fun ActiveCollectible.toRect(): Rect {
-        val halfW = width / 2f
-        val halfH = height / 2f
+        val half = size * hitboxScale / 2f
         return Rect(
-            left = x - halfW,
-            right = x + halfW,
-            bottom = y - halfH,
-            top = y + halfH
+            left = x - half,
+            right = x + half,
+            bottom = y - half,
+            top = y + half
         )
     }
 
     companion object {
         const val MAX_LIVES = 3
         const val PLAYER_Y = 0.2f
-        const val PLAYER_SIZE = GameDimensions.PLAYER_SIZE
+        val PLAYER_SIZE = Player.spriteSize
+        val PLAYER_HITBOX_SCALE = Player.hitboxScale
         const val POWERUP_DURATION = 5_000L
 
         private const val PLAYER_START_X = 0.5f

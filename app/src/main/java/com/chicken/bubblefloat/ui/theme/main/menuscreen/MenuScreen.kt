@@ -28,10 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -45,6 +45,7 @@ import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
+import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
 
 @Composable
 fun MenuScreen(
@@ -52,8 +53,10 @@ fun MenuScreen(
     lastResult: RunSummary?,
     bestHeight: Int,
     bestEggs: Int,
+    totalEggs: Int,
+    selectedSkinId: String,
     onOpenSettings: () -> Unit,
-    onOpenRecords: () -> Unit
+    onOpenLocker: () -> Unit
 ) {
     Surface(color = Color(0xFFFFF4D9)) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -83,6 +86,10 @@ fun MenuScreen(
                         )
                     }
 
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    EggWallet(totalEggs = totalEggs)
+
                     Spacer(modifier = Modifier.weight(1f))
 
                     RecordsPreview(bestHeight = bestHeight, bestEggs = bestEggs)
@@ -95,7 +102,7 @@ fun MenuScreen(
                 ) {
                     GameTitle()
 
-                    FloatingChickenBubble()
+                    FloatingChickenBubble(skinId = selectedSkinId)
 
                     StartPrimaryButton(
                         text = "Play",
@@ -104,8 +111,8 @@ fun MenuScreen(
                     )
 
                     OrangePrimaryButton(
-                        text = "Records",
-                        onClick = onOpenRecords,
+                        text = "Locker",
+                        onClick = onOpenLocker,
                         modifier = Modifier.fillMaxWidth(0.7f)
                     )
 
@@ -174,7 +181,8 @@ fun GameTitle(
 
 
 @Composable
-private fun FloatingChickenBubble() {
+private fun FloatingChickenBubble(skinId: String) {
+    val skin = remember(skinId) { ChickenSkins.findById(skinId) }
     Box(
         modifier = Modifier
             .size(180.dp)
@@ -187,10 +195,34 @@ private fun FloatingChickenBubble() {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.chicken_1_happy),
+            painter = painterResource(id = skin.bubbleRes),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(0.8f),
             contentScale = ContentScale.Fit
+        )
+    }
+}
+
+@Composable
+private fun EggWallet(totalEggs: Int) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(Color(0xD0FFFFFF))
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.item_egg),
+            contentDescription = null,
+            modifier = Modifier.size(28.dp)
+        )
+        Text(
+            text = totalEggs.toString(),
+            color = Color(0xFF204A64),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
