@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,15 +60,18 @@ import com.chicken.bubblefloat.audio.rememberAudioController
 import com.chicken.bubblefloat.game.GameEngine
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
+import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.GameSettingsOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.IntroOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.WinOverlay
 import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
+import kotlin.math.min
 
 @Composable
 fun GameScreen(
     onExitToMenu: (RunSummary) -> Unit,
+    selectedSkinId: String,
     viewModel: GameViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -185,7 +187,8 @@ fun GameScreen(
                     obstacles = state.obstacles,
                     collectibles = state.collectibles,
                     onControl = viewModel::movePlayer,
-                    showDebugHitboxes = settingsUi.debugHitboxesEnabled
+                    showDebugHitboxes = settingsUi.debugHitboxesEnabled,
+                    playerSkinId = selectedSkinId
                 )
             }
 
@@ -361,7 +364,8 @@ private fun GamePlayfield(
     obstacles: List<GameViewModel.Obstacle>,
     collectibles: List<GameViewModel.Collectible>,
     onControl: (Float) -> Unit,
-    showDebugHitboxes: Boolean
+    showDebugHitboxes: Boolean,
+    playerSkinId: String
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -454,7 +458,8 @@ private fun GamePlayfield(
             .size(playerPlacement.third, playerPlacement.fourth)
 
         PlayerSprite(
-            modifier = playerModifier
+            modifier = playerModifier,
+            skinId = playerSkinId
         )
         if (showDebugHitboxes) {
             DebugHitbox(
@@ -480,10 +485,13 @@ private fun calculatePlacement(
     height: Float,
     density: Density
 ): Quadruple {
-    val leftPx = (x - width / 2f) * widthPx
-    val topPx = heightPx - (y + height / 2f) * heightPx
-    val wPx = width * widthPx
-    val hPx = height * heightPx
+    val scale = min(widthPx, heightPx)
+    val halfWidthPx = width * scale / 2f
+    val halfHeightPx = height * scale / 2f
+    val leftPx = widthPx * x - halfWidthPx
+    val topPx = heightPx - heightPx * y - halfHeightPx
+    val wPx = width * scale
+    val hPx = height * scale
     val left = with(density) { leftPx.toDp() }
     val top = with(density) { topPx.toDp() }
     val w = with(density) { wPx.toDp() }
@@ -543,13 +551,14 @@ private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifi
 }
 
 @Composable
-private fun PlayerSprite(modifier: Modifier) {
+private fun PlayerSprite(modifier: Modifier, skinId: String) {
+    val skin = remember(skinId) { ChickenSkins.findById(skinId) }
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.chicken_1),
+            painter = painterResource(id = skin.spriteRes),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(0.85f),
             contentScale = ContentScale.Fit
