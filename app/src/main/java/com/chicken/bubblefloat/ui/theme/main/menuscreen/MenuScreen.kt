@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,7 +45,6 @@ import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
-import androidx.compose.runtime.getValue
 
 @Composable
 fun MenuScreen(
@@ -87,17 +87,13 @@ fun MenuScreen(
 
                     RecordsPreview(bestHeight = bestHeight, bestEggs = bestEggs)
                 }
-
+                Spacer(modifier = Modifier.weight(1f))
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    GradientOutlinedText(
-                        text = "Chicken\nBubble Float",
-                        fontSize = 44.sp,
-                        gradientColors = listOf(Color(0xFFFCEDFF), Color(0xFF74E8FF))
-                    )
+                    GameTitle()
 
                     FloatingChickenBubble()
 
@@ -123,11 +119,59 @@ fun MenuScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.weight(2f))
             }
         }
     }
 }
+
+@Composable
+fun GameTitle(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+
+        // CHICKEN (верхний слой)
+        GradientOutlinedText(
+            text = "CHICKEN",
+            fontSize = 52.sp,
+            strokeWidth = 8f,
+            gradientColors = listOf(
+                Color(0xFF5EE7E7),
+                Color(0xFF138E90)
+            )
+        )
+
+        // BUBBLE (слегка ниже CHICKEN)
+        GradientOutlinedText(
+            text = "BUBBLE",
+            modifier = Modifier.offset(y = 30.dp),
+            fontSize = 52.sp,
+            strokeWidth = 8f,
+            gradientColors = listOf(
+                Color(0xFFF7C8FF),
+                Color(0xFF7BB7FF)
+            )
+        )
+
+        // FLOAT (ниже остальных)
+        GradientOutlinedText(
+            text = "FLOAT",
+            modifier = Modifier.offset(y = 60.dp),
+            fontSize = 52.sp,
+            strokeWidth = 8f,
+            gradientColors = listOf(
+                Color(0xFF7CF3F1),
+                Color(0xFF5DD4FA)
+            )
+        )
+    }
+}
+
 
 @Composable
 private fun FloatingChickenBubble() {

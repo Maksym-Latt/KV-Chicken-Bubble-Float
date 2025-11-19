@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -332,7 +333,6 @@ private fun BubbleShieldBar(progress: Float) {
         )
         Box(
             modifier = Modifier
-                .widthIn(min = 120.dp)
                 .height(12.dp)
                 .clip(RoundedCornerShape(999.dp))
                 .background(Color(0x33FFFFFF))
@@ -522,19 +522,6 @@ private fun PlayerBubble(modifier: Modifier) {
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0x66FFFFFF), Color(0x338DE5FF), Color.Transparent),
-                        center = Offset(0.3f, 0.3f)
-                    )
-                )
-                .border(2.dp, Color(0x80FFFFFF), CircleShape)
-        )
-
         Image(
             painter = painterResource(id = R.drawable.chicken_1),
             contentDescription = null,
