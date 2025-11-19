@@ -1,122 +1,213 @@
 package com.chicken.bubblefloat.ui.main.menuscreen
 
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chicken.bubblefloat.R
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
+import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
 
 @Composable
 fun MenuScreen(
     onStartGame: () -> Unit,
-    lastScore: Int?,
+    lastResult: RunSummary?,
+    bestHeight: Int,
+    bestBubbles: Int,
     onOpenSettings: () -> Unit,
+    onOpenRecords: () -> Unit
 ) {
-    // ---------------- Root Surface ----------------
     Surface(color = Color(0xFFFFF4D9)) {
         Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.bg_menu),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
 
-            // ---------------- Background ----------------
-            MenuBackground()
-
-            // ---------------- Settings Button (Top-Start) ----------------
-            SecondaryIconButton(
-                onClick = onOpenSettings,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Open settings",
-                    tint = Color.White,
-                    modifier = Modifier.fillMaxSize(0.8f)
-                )
-            }
-
-            // ---------------- Center Content ----------------
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SecondaryIconButton(onClick = onOpenSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.fillMaxSize(0.8f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    RecordsPreview(bestHeight = bestHeight, bestBubbles = bestBubbles)
+                }
 
                 Column(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    GradientOutlinedText(
+                        text = "Chicken\nBubble Float",
+                        fontSize = 44.sp,
+                        gradientColors = listOf(Color(0xFFFCEDFF), Color(0xFF74E8FF))
+                    )
 
-                    // ------ Title Banner ------
-                    TitleBanner()
+                    FloatingChickenBubble()
 
-                    // ------ Chicken Hero ------
-                    MenuChickenHero()
-
-                    // ------ Start Button ------
                     StartPrimaryButton(
+                        text = "Play",
                         onClick = onStartGame,
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    )
+
+                    OrangePrimaryButton(
+                        text = "Records",
+                        onClick = onOpenRecords,
                         modifier = Modifier.fillMaxWidth(0.7f)
                     )
 
-                    // ------ Last Score ------
-                    if (lastScore != null) {
-                        GradientOutlinedText(
-                            text = "Last score: $lastScore",
-                            fontSize = 16.sp,
-                            gradientColors = listOf(Color.White, Color.White)
+                    if (lastResult != null) {
+                        Text(
+                            text = "Last flight: ${lastResult.heightMeters} m • ${lastResult.bubbles} bubbles",
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF39506B),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
 
 @Composable
-private fun MenuBackground() {
-    Image(
-        painter = painterResource(id = R.drawable.bg_menu),
-        contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.Crop
+private fun FloatingChickenBubble() {
+    val transition = rememberInfiniteTransition(label = "menu_bubble")
+    val offset by transition.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "menu_bubble_anim"
     )
+
+    Box(
+        modifier = Modifier
+            .size(220.dp)
+            .shadow(12.dp, shape = CircleShape, clip = false)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.radialGradient(
+                    listOf(Color(0x80FFFFFF), Color(0x40FFFFFF), Color.Transparent)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        listOf(Color(0xA0FFFFFF), Color(0x40DFF6FF), Color.Transparent)
+                    )
+                )
+        )
+
+        Image(
+            painter = painterResource(id = R.drawable.chicken_1),
+            contentDescription = null,
+            modifier = Modifier
+                .size(160.dp)
+                .padding(top = (-offset).dp),
+            contentScale = ContentScale.Fit
+        )
+    }
 }
 
 @Composable
-private fun TitleBanner() {
-    Image(
-        painter = painterResource(id = R.drawable.title),
-        contentDescription = null,
-        modifier = Modifier.fillMaxWidth(0.8f),
-        contentScale = ContentScale.Crop
-    )
-}
-
-@Composable
-private fun MenuChickenHero() {
-    Image(
-        painter = painterResource(id = R.drawable.chicken),
-        contentDescription = null,
-        modifier = Modifier.fillMaxWidth(0.5f),
-        contentScale = ContentScale.Crop
-    )
+private fun RecordsPreview(bestHeight: Int, bestBubbles: Int) {
+    Column(
+        modifier = Modifier
+            .width(140.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(Color(0xB0FFFFFF), Color(0x90D6FFFF))
+                )
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Best height",
+            color = Color(0xFF274653),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "$bestHeight m",
+            color = Color(0xFF0D4C5E),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Bubbles: $bestBubbles",
+            color = Color(0xFF274653),
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
+    }
 }

@@ -19,6 +19,7 @@ import com.chicken.bubblefloat.ui.main.gamescreen.GameScreen
 import com.chicken.bubblefloat.ui.main.menuscreen.MainViewModel
 import com.chicken.bubblefloat.ui.main.menuscreen.MenuScreen
 import com.chicken.bubblefloat.ui.main.menuscreen.overlay.SettingsOverlay
+import com.chicken.bubblefloat.ui.main.menuscreen.overlay.MenuRecordsOverlay
 
 @Composable
 fun AppRoot(
@@ -27,12 +28,14 @@ fun AppRoot(
     val ui by vm.ui.collectAsStateWithLifecycle()
     var showMenuSettings by rememberSaveable { mutableStateOf(false) }
     var showMenuPrivacy by rememberSaveable { mutableStateOf(false) }
+    var showMenuRecords by rememberSaveable { mutableStateOf(false) }
     val audio = rememberAudioController()
 
     LaunchedEffect(ui.screen) {
         if (ui.screen != MainViewModel.Screen.Menu) {
             showMenuSettings = false
             showMenuPrivacy = false
+            showMenuRecords = false
         }
         when (ui.screen) {
             MainViewModel.Screen.Menu -> audio.playMenuMusic()
@@ -53,15 +56,27 @@ fun AppRoot(
                             onStartGame = {
                                 showMenuSettings = false
                                 showMenuPrivacy = false
+                                showMenuRecords = false
                                 vm.startGame()
                             },
-                            lastScore = ui.lastScore.takeIf { it > 0 },
-                            onOpenSettings = { showMenuSettings = true }
+                            lastResult = ui.lastRun,
+                            bestHeight = ui.bestHeight,
+                            bestBubbles = ui.bestBubbles,
+                            onOpenSettings = { showMenuSettings = true },
+                            onOpenRecords = { showMenuRecords = true }
                         )
 
                         if (showMenuSettings) {
                             SettingsOverlay(
                                 onClose = { showMenuSettings = false },
+                            )
+                        }
+
+                        if (showMenuRecords) {
+                            MenuRecordsOverlay(
+                                bestHeight = ui.bestHeight,
+                                bestBubbles = ui.bestBubbles,
+                                onClose = { showMenuRecords = false }
                             )
                         }
                     }

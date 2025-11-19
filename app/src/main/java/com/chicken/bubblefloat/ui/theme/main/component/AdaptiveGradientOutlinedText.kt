@@ -85,3 +85,24 @@ fun AdaptiveGradientOutlinedText(
         drawContext.canvas.nativeCanvas.drawText(text, x, y, paint)
     }
 }
+
+@Composable
+fun GradientOutlinedText(
+    text: String,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = 44.sp,
+    strokeWidth: Float = 9f,
+    gradientColors: List<Color> = listOf(Color(0xFFFFA726), Color(0xFFFF6F00)),
+    typeface: Typeface? = null,
+    fontResId: Int? = R.font.tillana_extra_bold
+) {
+    AdaptiveGradientOutlinedText(
+        text = text,
+        modifier = modifier,
+        fontSize = fontSize,
+        strokeWidth = strokeWidth,
+        gradientColors = gradientColors,
+        typeface = typeface,
+        fontResId = fontResId
+    )
+}

@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
+data class RunSummary(
+    val heightMeters: Int,
+    val bubbles: Int
+)
+
 @HiltViewModel
 class MainViewModel @Inject constructor() : ViewModel() {
 
@@ -15,7 +20,9 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     data class UiState(
         val screen: Screen = Screen.Menu,
-        val lastScore: Int = 0,
+        val lastRun: RunSummary? = null,
+        val bestHeight: Int = 0,
+        val bestBubbles: Int = 0
     )
 
     private val _ui = MutableStateFlow(UiState())
@@ -25,11 +32,18 @@ class MainViewModel @Inject constructor() : ViewModel() {
         _ui.update { it.copy(screen = Screen.Game) }
     }
 
-    fun backToMenu(score: Int) {
-        _ui.update { UiState(screen = Screen.Menu, lastScore = score.coerceAtLeast(0)) }
+    fun backToMenu(result: RunSummary) {
+        _ui.update { current ->
+            current.copy(
+                screen = Screen.Menu,
+                lastRun = result,
+                bestHeight = maxOf(current.bestHeight, result.heightMeters),
+                bestBubbles = maxOf(current.bestBubbles, result.bubbles)
+            )
+        }
     }
 
     fun backToMenu() {
-        backToMenu(_ui.value.lastScore)
+        _ui.update { it.copy(screen = Screen.Menu) }
     }
 }
