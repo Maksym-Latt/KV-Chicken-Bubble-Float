@@ -13,5 +13,5 @@ interface AudioController {
     fun playGameWin()
     fun playChickenHit()
     fun playRareChicken()
-    fun playChickenEscape()
+    fun playChickenPickup()
 }

@@ -81,8 +81,8 @@ class DefaultAudioController @Inject constructor(
         playSound(SoundCue.RareChicken)
     }
 
-    override fun playChickenEscape() {
-        playSound(SoundCue.ChickenEscape)
+    override fun playChickenPickup() {
+        playSound(SoundCue.ChickenPickup)
     }
 
     // ---------------------- INTERNAL IMPLEMENTATION ----------------------
@@ -155,7 +155,7 @@ class DefaultAudioController @Inject constructor(
 
         RareChicken(R.raw.sfx_rare_chicken_bubble),
 
-        ChickenEscape(R.raw.sfx_chicken_pickup)
+        ChickenPickup(R.raw.sfx_chicken_pickup)
     }
 
     companion object {
@@ -168,7 +168,7 @@ class DefaultAudioController @Inject constructor(
             SoundCue.VictoryFanfare to 0.9f,
             SoundCue.ChickenHit to 0.9f,
             SoundCue.RareChicken to 0.9f,
-            SoundCue.ChickenEscape to 0.9f,
+            SoundCue.ChickenPickup to 0.9f,
         )
     }
 }

@@ -54,7 +54,7 @@ fun IntroOverlay(
             )
 
             Text(
-                text = "Drag the bubble left and right. Avoid prickly traps and angry birds.",
+                text = "Slide the bubble left and right. Avoid prickly traps and angry birds.",
                 textAlign = TextAlign.Center,
                 color = Color(0xFF3C3F63),
                 fontSize = 16.sp,
@@ -64,7 +64,7 @@ fun IntroOverlay(
             DangerRow()
 
             Text(
-                text = "Collect tiny bubbles to gain points. Rainbow bubbles make you invincible for a short time!",
+                text = "Collect the floating eggs to score points. Rare spheres grant a 5 second damage shield!",
                 textAlign = TextAlign.Center,
                 color = Color(0xFF3C3F63),
                 fontSize = 16.sp
@@ -91,7 +91,6 @@ private fun DangerRow() {
     ) {
         DangerItem(icon = R.drawable.item_thorn, label = "Thorns")
         DangerItem(icon = R.drawable.item_crow, label = "Crows")
-        DangerItem(icon = R.drawable.item_egg, label = "Branches")
     }
 }
 
@@ -101,8 +100,8 @@ private fun RewardRow() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        RewardItem(icon = R.drawable.item_bubble, label = "Bubbles")
-        RainbowRewardItem()
+        RewardItem(icon = R.drawable.item_egg, label = "Eggs")
+        BubbleRewardItem()
     }
 }
 
@@ -145,7 +144,7 @@ private fun RewardItem(icon: Int, label: String) {
 }
 
 @Composable
-private fun RainbowRewardItem() {
+private fun BubbleRewardItem() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
@@ -155,10 +154,17 @@ private fun RainbowRewardItem() {
                         listOf(Color(0xFFFFF2FF), Color(0xFF8EE8FF), Color.Transparent)
                     ),
                     shape = CircleShape
-                )
-        )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.item_bubble),
+                contentDescription = null,
+                modifier = Modifier.size(46.dp)
+            )
+        }
         Text(
-            text = "Rainbow",
+            text = "Bubble shield",
             color = Color(0xFF1D5F63),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,

@@ -28,7 +28,7 @@ import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 @Composable
 fun MenuRecordsOverlay(
     bestHeight: Int,
-    bestBubbles: Int,
+    bestEggs: Int,
     onClose: () -> Unit
 ) {
     val panelShape = RoundedCornerShape(28.dp)
@@ -72,13 +72,13 @@ fun MenuRecordsOverlay(
             StatValue("${bestHeight} m")
 
             Text(
-                text = "Best bubbles",
+                text = "Best eggs",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color(0xFF6B3B2A),
                     fontWeight = FontWeight.Bold
                 )
             )
-            StatValue(bestBubbles.toString())
+            StatValue(bestEggs.toString())
         }
     }
 }

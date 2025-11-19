@@ -19,7 +19,7 @@ class GameViewModel : ViewModel() {
     data class GameUiState(
         val phase: GamePhase = GamePhase.Intro,
         val heightMeters: Float = 0f,
-        val coins: Int = 0,
+        val eggs: Int = 0,
         val lives: Int = GameEngine.MAX_LIVES,
         val playerX: Float = 0.5f,
         val invincibleMillis: Long = 0L,
@@ -66,7 +66,7 @@ class GameViewModel : ViewModel() {
                     current.copy(
                         phase = phase,
                         heightMeters = engineState.heightMeters,
-                        coins = engineState.coins,
+                        eggs = engineState.eggs,
                         lives = engineState.lives,
                         playerX = engineState.playerX,
                         invincibleMillis = engineState.invincibleMillis,
@@ -112,7 +112,7 @@ class GameViewModel : ViewModel() {
 
     fun currentSummary(): RunSummary {
         val ui = _state.value
-        return RunSummary(heightMeters = ui.heightRounded, bubbles = ui.coins)
+        return RunSummary(heightMeters = ui.heightRounded, eggs = ui.eggs)
     }
 
     private fun GameEngine.Obstacle.toUiObstacle() = Obstacle(

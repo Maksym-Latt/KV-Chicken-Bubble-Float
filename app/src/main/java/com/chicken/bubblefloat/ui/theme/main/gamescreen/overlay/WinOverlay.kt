@@ -67,7 +67,7 @@ fun WinOverlay(
                 color = Color(0xFF364D63)
             )
             Text(
-                text = "Bubbles collected: ${summary.bubbles}",
+                text = "Eggs collected: ${summary.eggs}",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF364D63)

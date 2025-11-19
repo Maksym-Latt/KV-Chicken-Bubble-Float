@@ -23,7 +23,7 @@ class GameEngine(
         val isPaused: Boolean = false,
         val isCompleted: Boolean = false,
         val heightMeters: Float = 0f,
-        val coins: Int = 0,
+        val eggs: Int = 0,
         val lives: Int = MAX_LIVES,
         val speed: Float = BASE_SPEED,
         val playerX: Float = PLAYER_START_X,
@@ -50,8 +50,8 @@ class GameEngine(
         val type: CollectibleType
     )
 
-    enum class ObstacleType { Thorns, Crow, Branch }
-    enum class CollectibleType { Bubble, Rainbow }
+    enum class ObstacleType { Thorns, Crow }
+    enum class CollectibleType { Egg, Bubble }
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
@@ -63,7 +63,7 @@ class GameEngine(
     private var isCompleted = false
 
     private var height = 0f
-    private var coins = 0
+    private var eggs = 0
     private var lives = MAX_LIVES
     private var playerX = PLAYER_START_X
     private var targetX = PLAYER_START_X
@@ -71,7 +71,7 @@ class GameEngine(
     private var invincibleMillis = 0L
     private var damageCooldown = 0L
     private var spawnAccumulator = 0f
-    private var rainbowAccumulator = 0f
+    private var bubbleAccumulator = 0f
 
     private var nextId = 0
 
@@ -182,15 +182,17 @@ class GameEngine(
         while (spawnAccumulator >= SPAWN_STEP_METERS) {
             spawnAccumulator -= SPAWN_STEP_METERS
             spawnObstacle()
-            if (random.nextFloat() < COIN_ROW_CHANCE) {
-                spawnCoinCluster()
+            if (random.nextFloat() < EGG_ROW_CHANCE) {
+                spawnEggCluster()
             }
         }
 
-        rainbowAccumulator += heightGain
-        if (rainbowAccumulator >= RAINBOW_STEP_METERS) {
-            rainbowAccumulator = 0f
-            spawnRainbow()
+        bubbleAccumulator += heightGain
+        if (bubbleAccumulator >= BUBBLE_STEP_METERS) {
+            bubbleAccumulator -= BUBBLE_STEP_METERS
+            if (random.nextFloat() < BUBBLE_SPAWN_CHANCE) {
+                spawnBubble()
+            }
         }
     }
 
@@ -237,8 +239,8 @@ class GameEngine(
             if (playerRect.intersects(collectible.toRect())) {
                 collectibleIterator.remove()
                 when (collectible.type) {
-                    CollectibleType.Bubble -> coins += 1
-                    CollectibleType.Rainbow -> invincibleMillis = POWERUP_DURATION
+                    CollectibleType.Egg -> eggs += 1
+                    CollectibleType.Bubble -> invincibleMillis = POWERUP_DURATION
                 }
             }
         }
@@ -252,14 +254,12 @@ class GameEngine(
     private fun spawnObstacle() {
         val roll = random.nextFloat()
         val type = when {
-            roll < 0.4f -> ObstacleType.Thorns
-            roll < 0.7f -> ObstacleType.Crow
-            else -> ObstacleType.Branch
+            roll < 0.55f -> ObstacleType.Thorns
+            else -> ObstacleType.Crow
         }
         val (width, height) = when (type) {
             ObstacleType.Thorns -> 0.2f to 0.2f
             ObstacleType.Crow -> 0.25f to 0.22f
-            ObstacleType.Branch -> 0.5f to 0.18f
         }
         val half = width / 2f
         val x = random.nextFloat().coerceIn(half, 1f - half)
@@ -274,7 +274,7 @@ class GameEngine(
         )
     }
 
-    private fun spawnCoinCluster() {
+    private fun spawnEggCluster() {
         val baseX = random.nextFloat().coerceIn(0.15f, 0.85f)
         val count = 3
         repeat(count) { index ->
@@ -285,19 +285,19 @@ class GameEngine(
                 y = 1.1f + random.nextFloat() * 0.3f,
                 width = 0.12f,
                 height = 0.12f,
-                type = CollectibleType.Bubble
+                type = CollectibleType.Egg
             )
         }
     }
 
-    private fun spawnRainbow() {
+    private fun spawnBubble() {
         activeCollectibles += ActiveCollectible(
             id = nextId++,
             x = random.nextFloat().coerceIn(0.2f, 0.8f),
             y = 1.1f + random.nextFloat() * 0.3f,
             width = 0.16f,
             height = 0.16f,
-            type = CollectibleType.Rainbow
+            type = CollectibleType.Bubble
         )
     }
 
@@ -312,7 +312,7 @@ class GameEngine(
 
     private fun resetState() {
         height = 0f
-        coins = 0
+        eggs = 0
         lives = MAX_LIVES
         playerX = PLAYER_START_X
         targetX = PLAYER_START_X
@@ -320,7 +320,7 @@ class GameEngine(
         invincibleMillis = 0L
         damageCooldown = 0L
         spawnAccumulator = 0f
-        rainbowAccumulator = 0f
+        bubbleAccumulator = 0f
         nextId = 0
         activeObstacles.clear()
         activeCollectibles.clear()
@@ -332,7 +332,7 @@ class GameEngine(
             isPaused = isPaused,
             isCompleted = isCompleted,
             heightMeters = height,
-            coins = coins,
+            eggs = eggs,
             lives = lives,
             speed = speed,
             playerX = playerX,
@@ -400,7 +400,7 @@ class GameEngine(
         const val MAX_LIVES = 3
         const val PLAYER_Y = 0.2f
         const val PLAYER_SIZE = 0.22f
-        const val POWERUP_DURATION = 4_500L
+        const val POWERUP_DURATION = 5_000L
 
         private const val PLAYER_START_X = 0.5f
         private const val PLAYER_MOVE_SPEED = 1.5f
@@ -408,8 +408,9 @@ class GameEngine(
         private const val MAX_SPEED = 3.8f
         private const val SPEED_ACCELERATION = 0.18f
         private const val SPAWN_STEP_METERS = 1.7f
-        private const val COIN_ROW_CHANCE = 0.65f
-        private const val RAINBOW_STEP_METERS = 18f
+        private const val EGG_ROW_CHANCE = 0.7f
+        private const val BUBBLE_STEP_METERS = 9f
+        private const val BUBBLE_SPAWN_CHANCE = 0.35f
         private const val METERS_PER_SCREEN = 5.2f
         private const val REMOVAL_MARGIN = 0.25f
         private const val HIT_PROTECTION = 900L
