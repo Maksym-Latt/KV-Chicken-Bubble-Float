@@ -3,12 +3,14 @@ package com.chicken.bubblefloat.ui.main.gamescreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chicken.bubblefloat.game.GameEngine
+import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class GameViewModel : ViewModel() {
 
@@ -16,29 +18,36 @@ class GameViewModel : ViewModel() {
 
     data class GameUiState(
         val phase: GamePhase = GamePhase.Intro,
-        val remainingMillis: Long = GameEngine.TOTAL_TIME,
-        val score: Int = 0,
-        val chickens: List<Chicken> = emptyList(),
-        val combo: Int = 0,
-        val bestCombo: Int = 0,
-        val speedLevel: Int = 0,
-        val rareHits: Int = 0
+        val heightMeters: Float = 0f,
+        val coins: Int = 0,
+        val lives: Int = GameEngine.MAX_LIVES,
+        val playerX: Float = 0.5f,
+        val invincibleMillis: Long = 0L,
+        val obstacles: List<Obstacle> = emptyList(),
+        val collectibles: List<Collectible> = emptyList()
     ) {
-        val remainingSeconds: Int get() = (remainingMillis.coerceAtLeast(0L) / 1000L).toInt()
+        val heightRounded: Int get() = heightMeters.roundToInt()
+        val invincibilityProgress: Float
+            get() = (invincibleMillis / GameEngine.POWERUP_DURATION.toFloat()).coerceIn(0f, 1f)
     }
 
-    data class Chicken(
+    data class Obstacle(
         val id: Int,
-        val slotIndex: Int,
-        val type: GameEngine.ChickenType
-    ) {
-        val isRare: Boolean get() = type == GameEngine.ChickenType.Rare
-    }
+        val x: Float,
+        val y: Float,
+        val width: Float,
+        val height: Float,
+        val type: GameEngine.ObstacleType
+    )
 
-    sealed class TapOutcome {
-        data class Hit(val chickenId: Int, val type: GameEngine.ChickenType, val combo: Int) : TapOutcome()
-        object Miss : TapOutcome()
-    }
+    data class Collectible(
+        val id: Int,
+        val x: Float,
+        val y: Float,
+        val width: Float,
+        val height: Float,
+        val type: GameEngine.CollectibleType
+    )
 
     private val engine = GameEngine(viewModelScope)
     private val _state = MutableStateFlow(GameUiState())
@@ -56,13 +65,13 @@ class GameViewModel : ViewModel() {
                     }
                     current.copy(
                         phase = phase,
-                        remainingMillis = engineState.remainingMillis,
-                        score = engineState.score,
-                        chickens = engineState.chickens.map { it.toUiChicken() },
-                        combo = engineState.combo,
-                        bestCombo = engineState.bestCombo,
-                        speedLevel = engineState.speedLevel,
-                        rareHits = engineState.rareHits
+                        heightMeters = engineState.heightMeters,
+                        coins = engineState.coins,
+                        lives = engineState.lives,
+                        playerX = engineState.playerX,
+                        invincibleMillis = engineState.invincibleMillis,
+                        obstacles = engineState.obstacles.map { it.toUiObstacle() },
+                        collectibles = engineState.collectibles.map { it.toUiCollectible() }
                     )
                 }
             }
@@ -97,21 +106,30 @@ class GameViewModel : ViewModel() {
         _state.value = GameUiState()
     }
 
-    fun tap(slotIndex: Int): TapOutcome {
-        val result = engine.tap(slotIndex)
-        return when (result) {
-            is GameEngine.TapResult.Hit -> TapOutcome.Hit(
-                chickenId = result.chickenId,
-                type = result.type,
-                combo = result.combo
-            )
-            GameEngine.TapResult.Miss -> TapOutcome.Miss
-        }
+    fun movePlayer(fraction: Float) {
+        engine.setPlayerTarget(fraction)
     }
 
-    private fun GameEngine.Chicken.toUiChicken(): Chicken = Chicken(
+    fun currentSummary(): RunSummary {
+        val ui = _state.value
+        return RunSummary(heightMeters = ui.heightRounded, bubbles = ui.coins)
+    }
+
+    private fun GameEngine.Obstacle.toUiObstacle() = Obstacle(
         id = id,
-        slotIndex = slotIndex,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        type = type
+    )
+
+    private fun GameEngine.Collectible.toUiCollectible() = Collectible(
+        id = id,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
         type = type
     )
 

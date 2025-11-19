@@ -7,9 +7,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.sign
 import kotlin.random.Random
 
 class GameEngine(
@@ -21,93 +22,98 @@ class GameEngine(
         val isRunning: Boolean = false,
         val isPaused: Boolean = false,
         val isCompleted: Boolean = false,
-        val remainingMillis: Long = TOTAL_TIME,
-        val score: Int = 0,
-        val combo: Int = 0,
-        val bestCombo: Int = 0,
-        val speedLevel: Int = 0,
-        val chickens: List<Chicken> = emptyList(),
-        val rareHits: Int = 0
+        val heightMeters: Float = 0f,
+        val coins: Int = 0,
+        val lives: Int = MAX_LIVES,
+        val speed: Float = BASE_SPEED,
+        val playerX: Float = PLAYER_START_X,
+        val invincibleMillis: Long = 0L,
+        val obstacles: List<Obstacle> = emptyList(),
+        val collectibles: List<Collectible> = emptyList()
     )
 
-    data class Chicken(
+    data class Obstacle(
         val id: Int,
-        val slotIndex: Int,
-        val type: ChickenType
+        val x: Float,
+        val y: Float,
+        val width: Float,
+        val height: Float,
+        val type: ObstacleType
     )
 
-    enum class ChickenType { Resident, Rare }
-
-    sealed class TapResult {
-        data class Hit(val chickenId: Int, val type: ChickenType, val combo: Int) : TapResult()
-        object Miss : TapResult()
-    }
-
-    private data class ActiveChicken(
+    data class Collectible(
         val id: Int,
-        val slotIndex: Int,
-        val type: ChickenType,
-        val lifetime: Long,
-        var remaining: Long
+        val x: Float,
+        val y: Float,
+        val width: Float,
+        val height: Float,
+        val type: CollectibleType
     )
+
+    enum class ObstacleType { Thorns, Crow, Branch }
+    enum class CollectibleType { Bubble, Rainbow }
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
 
     private var timerJob: Job? = null
-    private var spawnJob: Job? = null
 
-    private var timeLeft = TOTAL_TIME
-    private var combo = 0
-    private var bestCombo = 0
-    private var speedLevel = 0
-    private var rareHits = 0
-    private var nextId = 0
-    private var isPaused = false
     private var isRunning = false
+    private var isPaused = false
+    private var isCompleted = false
 
-    private val activeChickens = mutableListOf<ActiveChicken>()
+    private var height = 0f
+    private var coins = 0
+    private var lives = MAX_LIVES
+    private var playerX = PLAYER_START_X
+    private var targetX = PLAYER_START_X
+    private var speed = BASE_SPEED
+    private var invincibleMillis = 0L
+    private var damageCooldown = 0L
+    private var spawnAccumulator = 0f
+    private var rainbowAccumulator = 0f
+
+    private var nextId = 0
+
+    private val activeObstacles = mutableListOf<ActiveObstacle>()
+    private val activeCollectibles = mutableListOf<ActiveCollectible>()
+
+    private data class ActiveObstacle(
+        val id: Int,
+        var x: Float,
+        var y: Float,
+        val width: Float,
+        val height: Float,
+        val type: ObstacleType
+    )
+
+    private data class ActiveCollectible(
+        val id: Int,
+        var x: Float,
+        var y: Float,
+        val width: Float,
+        val height: Float,
+        val type: CollectibleType
+    )
 
     fun start() {
         resetState()
         isRunning = true
         isPaused = false
-        _state.value = State(
-            isRunning = true,
-            isPaused = false,
-            isCompleted = false,
-            remainingMillis = timeLeft,
-            score = 0,
-            combo = 0,
-            bestCombo = 0,
-            speedLevel = 0,
-            chickens = emptyList(),
-            rareHits = 0
-        )
+        isCompleted = false
+        publishState()
 
         timerJob?.cancel()
-        spawnJob?.cancel()
-
         timerJob = scope.launch {
             var previous = SystemClock.elapsedRealtime()
             while (isActive) {
                 delay(TICK_RATE)
+                if (!isRunning) continue
                 val now = SystemClock.elapsedRealtime()
-                if (!isRunning || isPaused) {
-                    previous = now
-                    continue
-                }
                 val delta = now - previous
                 previous = now
+                if (isPaused) continue
                 tick(delta)
-            }
-        }
-
-        spawnJob = scope.launch {
-            while (isActive) {
-                delay(currentSpawnDelay())
-                if (!isRunning || isPaused) continue
-                spawnChicken()
             }
         }
     }
@@ -115,222 +121,298 @@ class GameEngine(
     fun pause() {
         if (!isRunning || isPaused) return
         isPaused = true
-        _state.update { it.copy(isPaused = true) }
+        publishState()
     }
 
     fun resume() {
         if (!isRunning || !isPaused) return
         isPaused = false
-        _state.update { it.copy(isPaused = false) }
+        publishState()
     }
 
     fun stop() {
         isRunning = false
         isPaused = false
+        isCompleted = false
         timerJob?.cancel()
-        spawnJob?.cancel()
         timerJob = null
-        spawnJob = null
-        activeChickens.clear()
-        _state.value = State()
+        resetState()
+        publishState()
     }
 
-    fun tap(slotIndex: Int): TapResult {
-        val current = _state.value
-        if (!current.isRunning || current.isPaused || current.isCompleted) return TapResult.Miss
-
-        val idx = activeChickens.indexOfFirst { it.slotIndex == slotIndex }
-        if (idx == -1) {
-            combo = 0
-            timeLeft = (timeLeft - MISS_TIME_PENALTY).coerceAtLeast(0L)
-
-            if (timeLeft == 0L) {
-                completeGame()
-                return TapResult.Miss
-            }
-
-            _state.update {
-                it.copy(
-                    remainingMillis = timeLeft,
-                    combo = 0,
-                    bestCombo = bestCombo,
-                    speedLevel = speedLevel,
-                    chickens = activeChickens.map { chicken -> chicken.toUi() }
-                )
-            }
-            return TapResult.Miss
+    fun setPlayerTarget(fraction: Float) {
+        val minX = PLAYER_SIZE / 2f
+        val maxX = 1f - PLAYER_SIZE / 2f
+        val clamped = fraction.coerceIn(minX, maxX)
+        targetX = clamped
+        if (!isRunning) {
+            playerX = clamped
+            publishState()
         }
-
-        val chicken = activeChickens[idx]
-        activeChickens.removeAt(idx)
-
-        combo += 1
-        if (combo > bestCombo) bestCombo = combo
-        if (combo % SPEED_COMBO_STEP == 0) speedLevel = (speedLevel + 1).coerceAtMost(MAX_SPEED_LEVEL)
-
-        val scoreGain = if (chicken.type == ChickenType.Rare) {
-            RARE_SCORE_REWARD
-        } else {
-            BASE_SCORE_REWARD + speedLevel * SPEED_SCORE_BONUS
-        }
-
-        if (chicken.type == ChickenType.Rare) {
-            rareHits += 1
-        }
-
-        _state.update {
-            it.copy(
-                score = it.score + scoreGain,
-                combo = combo,
-                bestCombo = bestCombo,
-                speedLevel = speedLevel,
-                chickens = activeChickens.map { c -> c.toUi() },
-                rareHits = rareHits
-            )
-        }
-
-        return TapResult.Hit(chickenId = chicken.id, type = chicken.type, combo = combo)
     }
 
     private fun tick(elapsed: Long) {
-        if (!isRunning || isPaused) return
-        if (timeLeft <= 0L) return
+        val deltaSeconds = elapsed / 1000f
+        val heightGain = speed * deltaSeconds
+        height += heightGain
+        speed = (speed + SPEED_ACCELERATION * deltaSeconds).coerceAtMost(MAX_SPEED)
 
-        timeLeft = (timeLeft - elapsed).coerceAtLeast(0L)
-        val hadEscape = updateChickens(elapsed)
-        if (hadEscape) {
-            combo = 0
-        }
+        val normalizedShift = heightGain / METERS_PER_SCREEN
+        activeObstacles.forEach { it.y -= normalizedShift }
+        activeCollectibles.forEach { it.y -= normalizedShift }
 
-        if (timeLeft <= 0L) {
+        invincibleMillis = (invincibleMillis - elapsed).coerceAtLeast(0L)
+        damageCooldown = (damageCooldown - elapsed).coerceAtLeast(0L)
+
+        updatePlayerPosition(deltaSeconds)
+        removeOffscreen()
+        handleSpawns(heightGain)
+        handleCollisions()
+
+        if (lives <= 0) {
             completeGame()
+            return
+        }
+
+        publishState()
+    }
+
+    private fun handleSpawns(heightGain: Float) {
+        spawnAccumulator += heightGain
+        while (spawnAccumulator >= SPAWN_STEP_METERS) {
+            spawnAccumulator -= SPAWN_STEP_METERS
+            spawnObstacle()
+            if (random.nextFloat() < COIN_ROW_CHANCE) {
+                spawnCoinCluster()
+            }
+        }
+
+        rainbowAccumulator += heightGain
+        if (rainbowAccumulator >= RAINBOW_STEP_METERS) {
+            rainbowAccumulator = 0f
+            spawnRainbow()
+        }
+    }
+
+    private fun updatePlayerPosition(deltaSeconds: Float) {
+        val diff = targetX - playerX
+        if (abs(diff) < 0.001f) {
+            playerX = targetX
+            return
+        }
+        val direction = sign(diff)
+        val step = PLAYER_MOVE_SPEED * deltaSeconds
+        playerX = if (abs(diff) <= step) {
+            targetX
         } else {
-            _state.update {
-                it.copy(
-                    remainingMillis = timeLeft,
-                    combo = combo,
-                    bestCombo = bestCombo,
-                    speedLevel = speedLevel,
-                    chickens = activeChickens.map { chicken -> chicken.toUi() }
-                )
-            }
+            (playerX + direction * step).coerceIn(PLAYER_SIZE / 2f, 1f - PLAYER_SIZE / 2f)
         }
     }
 
-    private fun updateChickens(elapsed: Long): Boolean {
-        var hadEscape = false
-        val iterator = activeChickens.iterator()
-        while (iterator.hasNext()) {
-            val chicken = iterator.next()
-            chicken.remaining -= elapsed
-            if (chicken.remaining <= 0L) {
-                iterator.remove()
-                hadEscape = true
-            }
-        }
-        if (hadEscape) {
-            _state.update {
-                it.copy(
-                    chickens = activeChickens.map { chicken -> chicken.toUi() },
-                    combo = 0
-                )
-            }
-        }
-        return hadEscape
-    }
-
-    private fun spawnChicken() {
-        val availableSlots = (0 until GRID_SIZE).filter { slot ->
-            activeChickens.none { it.slotIndex == slot }
-        }
-        if (availableSlots.isEmpty()) return
-
-        val slot = availableSlots.random(random)
-        val type = if (random.nextFloat() < RARE_CHANCE) ChickenType.Rare else ChickenType.Resident
-        val lifetime = if (type == ChickenType.Rare) RARE_VISIBLE_TIME else currentVisibleDuration()
-        val chicken = ActiveChicken(
-            id = nextId++,
-            slotIndex = slot,
-            type = type,
-            lifetime = lifetime,
-            remaining = lifetime
+    private fun handleCollisions() {
+        val playerHalf = PLAYER_SIZE / 2f
+        val playerRect = Rect(
+            left = playerX - playerHalf,
+            right = playerX + playerHalf,
+            bottom = PLAYER_Y - playerHalf,
+            top = PLAYER_Y + playerHalf
         )
-        activeChickens += chicken
-        _state.update {
-            it.copy(chickens = activeChickens.map { c -> c.toUi() })
+
+        val obstacleIterator = activeObstacles.iterator()
+        while (obstacleIterator.hasNext()) {
+            val obstacle = obstacleIterator.next()
+            if (playerRect.intersects(obstacle.toRect())) {
+                obstacleIterator.remove()
+                if (invincibleMillis <= 0L && damageCooldown <= 0L) {
+                    lives -= 1
+                    damageCooldown = HIT_PROTECTION
+                    invincibleMillis = HIT_PROTECTION
+                }
+            }
+        }
+
+        val collectibleIterator = activeCollectibles.iterator()
+        while (collectibleIterator.hasNext()) {
+            val collectible = collectibleIterator.next()
+            if (playerRect.intersects(collectible.toRect())) {
+                collectibleIterator.remove()
+                when (collectible.type) {
+                    CollectibleType.Bubble -> coins += 1
+                    CollectibleType.Rainbow -> invincibleMillis = POWERUP_DURATION
+                }
+            }
         }
     }
 
-    private fun ActiveChicken.toUi(): Chicken = Chicken(
-        id = id,
-        slotIndex = slotIndex,
-        type = type
-    )
+    private fun removeOffscreen() {
+        activeObstacles.removeAll { it.y + it.height / 2f < -REMOVAL_MARGIN }
+        activeCollectibles.removeAll { it.y + it.height / 2f < -REMOVAL_MARGIN }
+    }
 
-    private fun completeGame() {
-        isRunning = false
-        timerJob?.cancel()
-        spawnJob?.cancel()
-        timerJob = null
-        spawnJob = null
-        activeChickens.clear()
-        _state.update {
-            it.copy(
-                isRunning = false,
-                isPaused = false,
-                isCompleted = true,
-                remainingMillis = 0L,
-                chickens = emptyList()
+    private fun spawnObstacle() {
+        val roll = random.nextFloat()
+        val type = when {
+            roll < 0.4f -> ObstacleType.Thorns
+            roll < 0.7f -> ObstacleType.Crow
+            else -> ObstacleType.Branch
+        }
+        val (width, height) = when (type) {
+            ObstacleType.Thorns -> 0.2f to 0.2f
+            ObstacleType.Crow -> 0.25f to 0.22f
+            ObstacleType.Branch -> 0.5f to 0.18f
+        }
+        val half = width / 2f
+        val x = random.nextFloat().coerceIn(half, 1f - half)
+        val y = 1.2f + random.nextFloat() * 0.4f
+        activeObstacles += ActiveObstacle(
+            id = nextId++,
+            x = x,
+            y = y,
+            width = width,
+            height = height,
+            type = type
+        )
+    }
+
+    private fun spawnCoinCluster() {
+        val baseX = random.nextFloat().coerceIn(0.15f, 0.85f)
+        val count = 3
+        repeat(count) { index ->
+            val offset = (index - (count - 1) / 2f) * 0.12f
+            activeCollectibles += ActiveCollectible(
+                id = nextId++,
+                x = (baseX + offset).coerceIn(0.12f, 0.88f),
+                y = 1.1f + random.nextFloat() * 0.3f,
+                width = 0.12f,
+                height = 0.12f,
+                type = CollectibleType.Bubble
             )
         }
     }
 
-    private fun resetState() {
+    private fun spawnRainbow() {
+        activeCollectibles += ActiveCollectible(
+            id = nextId++,
+            x = random.nextFloat().coerceIn(0.2f, 0.8f),
+            y = 1.1f + random.nextFloat() * 0.3f,
+            width = 0.16f,
+            height = 0.16f,
+            type = CollectibleType.Rainbow
+        )
+    }
+
+    private fun completeGame() {
+        isRunning = false
+        isPaused = false
+        isCompleted = true
         timerJob?.cancel()
-        spawnJob?.cancel()
-        activeChickens.clear()
-        timeLeft = TOTAL_TIME
-        combo = 0
-        bestCombo = 0
-        speedLevel = 0
-        rareHits = 0
+        timerJob = null
+        publishState()
+    }
+
+    private fun resetState() {
+        height = 0f
+        coins = 0
+        lives = MAX_LIVES
+        playerX = PLAYER_START_X
+        targetX = PLAYER_START_X
+        speed = BASE_SPEED
+        invincibleMillis = 0L
+        damageCooldown = 0L
+        spawnAccumulator = 0f
+        rainbowAccumulator = 0f
         nextId = 0
+        activeObstacles.clear()
+        activeCollectibles.clear()
     }
 
-    private fun currentSpawnDelay(): Long {
-        val reduction = speedLevel * SPAWN_REDUCTION_STEP
-        return (BASE_SPAWN_DELAY - reduction).coerceAtLeast(MIN_SPAWN_DELAY)
+    private fun publishState() {
+        _state.value = State(
+            isRunning = isRunning,
+            isPaused = isPaused,
+            isCompleted = isCompleted,
+            heightMeters = height,
+            coins = coins,
+            lives = lives,
+            speed = speed,
+            playerX = playerX,
+            invincibleMillis = invincibleMillis,
+            obstacles = activeObstacles.map { it.toPublic() },
+            collectibles = activeCollectibles.map { it.toPublic() }
+        )
     }
 
-    private fun currentVisibleDuration(): Long {
-        val reduction = speedLevel * VISIBLE_REDUCTION_STEP
-        return (BASE_VISIBLE_TIME - reduction).coerceAtLeast(MIN_VISIBLE_TIME)
+    private fun ActiveObstacle.toPublic() = Obstacle(
+        id = id,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        type = type
+    )
+
+    private fun ActiveCollectible.toPublic() = Collectible(
+        id = id,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        type = type
+    )
+
+    private data class Rect(
+        val left: Float,
+        val right: Float,
+        val bottom: Float,
+        val top: Float
+    ) {
+        fun intersects(other: Rect): Boolean {
+            return right > other.left &&
+                    left < other.right &&
+                    top > other.bottom &&
+                    bottom < other.top
+        }
+    }
+
+    private fun ActiveObstacle.toRect(): Rect {
+        val halfW = width / 2f
+        val halfH = height / 2f
+        return Rect(
+            left = x - halfW,
+            right = x + halfW,
+            bottom = y - halfH,
+            top = y + halfH
+        )
+    }
+
+    private fun ActiveCollectible.toRect(): Rect {
+        val halfW = width / 2f
+        val halfH = height / 2f
+        return Rect(
+            left = x - halfW,
+            right = x + halfW,
+            bottom = y - halfH,
+            top = y + halfH
+        )
     }
 
     companion object {
-        const val TOTAL_TIME: Long = 60_000L
+        const val MAX_LIVES = 3
+        const val PLAYER_Y = 0.2f
+        const val PLAYER_SIZE = 0.22f
+        const val POWERUP_DURATION = 4_500L
 
-        private const val GRID_SIZE = 12
+        private const val PLAYER_START_X = 0.5f
+        private const val PLAYER_MOVE_SPEED = 1.5f
+        private const val BASE_SPEED = 1.3f
+        private const val MAX_SPEED = 3.8f
+        private const val SPEED_ACCELERATION = 0.18f
+        private const val SPAWN_STEP_METERS = 1.7f
+        private const val COIN_ROW_CHANCE = 0.65f
+        private const val RAINBOW_STEP_METERS = 18f
+        private const val METERS_PER_SCREEN = 5.2f
+        private const val REMOVAL_MARGIN = 0.25f
+        private const val HIT_PROTECTION = 900L
         private const val TICK_RATE = 16L
-
-        private const val BASE_SPAWN_DELAY = 1_050L
-        private const val MIN_SPAWN_DELAY = 320L
-        private const val SPAWN_REDUCTION_STEP = 70L
-
-        private const val BASE_VISIBLE_TIME = 1_150L
-        private const val MIN_VISIBLE_TIME = 420L
-        private const val VISIBLE_REDUCTION_STEP = 55L
-        private const val RARE_VISIBLE_TIME = 1_400L
-
-        private const val MISS_TIME_PENALTY = 5_000L
-
-        private const val BASE_SCORE_REWARD = 60
-        private const val SPEED_SCORE_BONUS = 12
-        private const val RARE_SCORE_REWARD = 100
-
-        private const val SPEED_COMBO_STEP = 5
-        private const val MAX_SPEED_LEVEL = 10
-
-        private const val RARE_CHANCE = 0.08f
     }
 }
