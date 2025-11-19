@@ -1,7 +1,9 @@
 package com.chicken.bubblefloat.audio
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.SoundPool
 import androidx.annotation.RawRes
 import com.chicken.bubblefloat.R
 import javax.inject.Inject
@@ -15,13 +17,35 @@ class DefaultAudioController @Inject constructor(
     settingsRepository: SettingsRepository
 ) : AudioController {
 
-    private var musicVolume: Float = settingsRepository.getMusicVolume().toVolume()
-    private var soundVolume: Float = settingsRepository.getSoundVolume().toVolume()
+    private var musicEnabled: Boolean = settingsRepository.isMusicEnabled()
+    private var soundEnabled: Boolean = settingsRepository.isSoundEnabled()
 
     private var currentMusic: MusicTrack? = null
-    private var currentSound: SoundCue? = null
     private var musicPlayer: MediaPlayer? = null
-    private var sfxPlayer: MediaPlayer? = null
+    private val soundPool: SoundPool
+    private val soundIds: Map<SoundCue, Int>
+    private val loadedSoundIds = mutableSetOf<Int>()
+
+    init {
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        soundPool = SoundPool.Builder()
+            .setAudioAttributes(attributes)
+            .setMaxStreams(4)
+            .build()
+        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status == 0) {
+                loadedSoundIds += sampleId
+            } else {
+                loadedSoundIds -= sampleId
+            }
+        }
+        soundIds = SoundCue.entries.associateWith { cue ->
+            soundPool.load(context, cue.resId, 1)
+        }
+    }
 
     // ---------------------- PUBLIC API ----------------------
 
@@ -47,26 +71,28 @@ class DefaultAudioController @Inject constructor(
     }
 
     override fun resumeMusic() {
+        if (!musicEnabled) return
         musicPlayer?.let { player ->
             currentMusic?.let { track -> player.setVolume(track.normalizedMusicVolume(), track.normalizedMusicVolume()) }
             player.start()
         }
     }
 
-    override fun setMusicVolume(percent: Int) {
-        musicVolume = percent.toVolume()
+    override fun setMusicEnabled(enabled: Boolean) {
+        musicEnabled = enabled
         currentMusic?.let { track ->
             val adjusted = track.normalizedMusicVolume()
             musicPlayer?.setVolume(adjusted, adjusted)
         }
+        if (!enabled) {
+            musicPlayer?.pause()
+        } else {
+            resumeMusic()
+        }
     }
 
-    override fun setSoundVolume(percent: Int) {
-        soundVolume = percent.toVolume()
-        currentSound?.let { cue ->
-            val adjusted = cue.normalizedSoundVolume()
-            sfxPlayer?.setVolume(adjusted, adjusted)
-        }
+    override fun setSoundEnabled(enabled: Boolean) {
+        soundEnabled = enabled
     }
 
     override fun playGameWin() {
@@ -91,8 +117,10 @@ class DefaultAudioController @Inject constructor(
         if (currentMusic == track && musicPlayer != null) {
             val adjusted = track.normalizedMusicVolume()
             musicPlayer?.setVolume(adjusted, adjusted)
-            if (musicPlayer?.isPlaying != true) {
+            if (musicEnabled && musicPlayer?.isPlaying != true) {
                 musicPlayer?.start()
+            } else if (!musicEnabled && musicPlayer?.isPlaying == true) {
+                musicPlayer?.pause()
             }
             return
         }
@@ -104,37 +132,31 @@ class DefaultAudioController @Inject constructor(
             val adjusted = track.normalizedMusicVolume()
             setVolume(adjusted, adjusted)
             setOnCompletionListener(null)
-            start()
+            if (musicEnabled) {
+                start()
+            }
         }
         currentMusic = track
     }
 
     private fun playSound(effect: SoundCue) {
-        sfxPlayer?.run {
-            stop()
-            release()
-        }
-        sfxPlayer = MediaPlayer.create(context, effect.resId).apply {
-            isLooping = false
-            val adjusted = effect.normalizedSoundVolume()
-            setVolume(adjusted, adjusted)
-            setOnCompletionListener {
-                it.release()
-                if (sfxPlayer === it) {
-                    sfxPlayer = null
-                    currentSound = null
-                }
-            }
-            start()
-        }
-        currentSound = effect
+        if (!soundEnabled) return
+        val soundId = soundIds[effect] ?: return
+        if (soundId !in loadedSoundIds) return
+        val adjusted = effect.normalizedSoundVolume()
+        if (adjusted <= 0f) return
+        soundPool.play(soundId, adjusted, adjusted, 1, 0, 1f)
     }
 
-    private fun Int.toVolume(): Float = (this.coerceIn(0, 100) / 100f).coerceIn(0f, 1f)
+    private fun MusicTrack.normalizedMusicVolume(): Float {
+        val base = if (musicEnabled) 1f else 0f
+        return base.adjustWith(MUSIC_NORMALIZATION[this])
+    }
 
-    private fun MusicTrack.normalizedMusicVolume(): Float = musicVolume.adjustWith(MUSIC_NORMALIZATION[this])
-
-    private fun SoundCue.normalizedSoundVolume(): Float = soundVolume.adjustWith(SOUND_NORMALIZATION[this])
+    private fun SoundCue.normalizedSoundVolume(): Float {
+        val base = if (soundEnabled) 1f else 0f
+        return base.adjustWith(SOUND_NORMALIZATION[this])
+    }
 
     private fun Float.adjustWith(gain: Float?): Float = (this * (gain ?: 1f)).coerceIn(0f, 1f)
 

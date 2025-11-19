@@ -33,8 +33,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
+import com.chicken.bubblefloat.ui.main.component.SettingsToggleButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
-import com.chicken.bubblefloat.ui.main.component.VolumeSlider
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
 
 @Composable
@@ -98,16 +98,24 @@ fun GameSettingsOverlay(
                     gradientColors = listOf(Color(0xFFFFFFFF), Color(0xFFFFFFFF)),
                 )
 
-                VolumeSlider(
-                    label = "Music volume",
-                    value = ui.musicVolume,
-                    onValueChange = viewModel::setMusicVolume
+                SettingsToggleButton(
+                    label = "Music",
+                    value = ui.musicEnabled,
+                    onToggle = viewModel::setMusicEnabled
                 )
 
-                VolumeSlider(
+                SettingsToggleButton(
                     label = "Sound effects",
-                    value = ui.soundVolume,
-                    onValueChange = viewModel::setSoundVolume
+                    value = ui.soundEnabled,
+                    onToggle = viewModel::setSoundEnabled
+                )
+
+                SettingsToggleButton(
+                    label = "Debug hitboxes",
+                    value = ui.debugHitboxesEnabled,
+                    onToggle = viewModel::setDebugHitboxes,
+                    enabledLabel = "Shown",
+                    disabledLabel = "Hidden"
                 )
 
                 Spacer(Modifier.height(8.dp))

@@ -7,6 +7,7 @@ import com.chicken.bubblefloat.data.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,27 +21,32 @@ class SettingsViewModel @Inject constructor(
     val ui: StateFlow<SettingsUiState> = _ui
 
     init {
-        val music = repo.getMusicVolume()
-        val sound = repo.getSoundVolume()
+        val musicEnabled = repo.isMusicEnabled()
+        val soundEnabled = repo.isSoundEnabled()
+        val debugEnabled = repo.isDebugEnabled()
         _ui.value = SettingsUiState(
-            musicVolume = music,
-            soundVolume = sound
+            musicEnabled = musicEnabled,
+            soundEnabled = soundEnabled,
+            debugHitboxesEnabled = debugEnabled
         )
-        audio.setMusicVolume(music)
-        audio.setSoundVolume(sound)
+        audio.setMusicEnabled(musicEnabled)
+        audio.setSoundEnabled(soundEnabled)
     }
 
-    fun setMusicVolume(value: Int) {
-        val v = value.coerceIn(0, 100)
-        _ui.value = _ui.value.copy(musicVolume = v)
-        viewModelScope.launch { repo.setMusicVolume(v) }
-        audio.setMusicVolume(v)
+    fun setMusicEnabled(enabled: Boolean) {
+        _ui.update { it.copy(musicEnabled = enabled) }
+        viewModelScope.launch { repo.setMusicEnabled(enabled) }
+        audio.setMusicEnabled(enabled)
     }
 
-    fun setSoundVolume(value: Int) {
-        val v = value.coerceIn(0, 100)
-        _ui.value = _ui.value.copy(soundVolume = v)
-        viewModelScope.launch { repo.setSoundVolume(v) }
-        audio.setSoundVolume(v)
+    fun setSoundEnabled(enabled: Boolean) {
+        _ui.update { it.copy(soundEnabled = enabled) }
+        viewModelScope.launch { repo.setSoundEnabled(enabled) }
+        audio.setSoundEnabled(enabled)
+    }
+
+    fun setDebugHitboxes(enabled: Boolean) {
+        _ui.update { it.copy(debugHitboxesEnabled = enabled) }
+        viewModelScope.launch { repo.setDebugEnabled(enabled) }
     }
 }
