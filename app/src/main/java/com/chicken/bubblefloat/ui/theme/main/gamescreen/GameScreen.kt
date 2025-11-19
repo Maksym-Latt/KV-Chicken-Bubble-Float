@@ -40,7 +40,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.pointer.awaitPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -51,8 +50,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.toDp
-import androidx.compose.ui.unit.toPx
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -510,18 +507,12 @@ private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifi
 
 @Composable
 private fun PlayerBubble(invincible: Boolean, modifier: Modifier) {
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(Color(0x55FFFFFF))
-            .then(if (invincible) Modifier.shadow(10.dp, CircleShape, clip = false) else Modifier),
-        contentAlignment = Alignment.Center
-    ) {
+
         Image(
             painter = painterResource(id = R.drawable.chicken_1),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(0.8f),
             contentScale = ContentScale.Fit
         )
-    }
+
 }

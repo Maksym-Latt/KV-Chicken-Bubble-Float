@@ -1,15 +1,35 @@
+# ================================
+# Android / Gradle / IDE ignore
+# ================================
+
+# -------- Gradle --------
+.gradle/
+build/
+**/build/
+
+# -------- Android Studio / IntelliJ IDEA --------
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+
+# Удаляем отдельные файлы/директории в .idea,
+# но саму .idea не коммитим полностью
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# -------- Local configuration --------
 local.properties
+
+# -------- Native builds --------
+.cxx/
+.externalNativeBuild/
+
+# -------- OS / misc --------
+.DS_Store
+*.log
+
+# -------- Screenshots & captures --------
+captures/

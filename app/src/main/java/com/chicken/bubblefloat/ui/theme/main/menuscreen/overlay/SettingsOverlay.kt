@@ -19,7 +19,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
-import com.chicken.bubblefloat.ui.main.component.LabeledSlider
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
 
@@ -84,26 +83,6 @@ fun SettingsOverlay(
                     gradientColors = listOf(Color(0xFFFFFFFF), Color(0xFFFFFFFF)),
                 )
                 Spacer(Modifier.height(12.dp))
-
-                LabeledSlider(
-                    title = "Volume",
-                    value = ui.musicVolume,
-                    onChange = viewModel::setMusicVolume,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                LabeledSlider(
-                    title = "Sound",
-                    value = ui.soundVolume,
-                    onChange = viewModel::setSoundVolume,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
             }
         }
     }

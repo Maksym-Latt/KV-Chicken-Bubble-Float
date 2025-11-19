@@ -153,9 +153,9 @@ class DefaultAudioController @Inject constructor(
 
         ChickenHit(R.raw.sfx_chicken_hit),
 
-        RareChicken(R.raw.sfx_rare_chicken),
+        RareChicken(R.raw.sfx_rare_chicken_bubble),
 
-        ChickenEscape(R.raw.sfx_chicken_escape)
+        ChickenEscape(R.raw.sfx_chicken_pickup)
     }
 
     companion object {

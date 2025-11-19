@@ -32,8 +32,7 @@
             android:resizeableActivity="false"
             android:screenOrientation="portrait"
             android:supportsPictureInPicture="false"
-            android:theme="@style/Theme.ChickenPop"></activity>
-    </application>
+            android:theme="@style/Theme.ChickenBubbleFloat"></activity>
     </application>
 
 </manifest>

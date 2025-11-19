@@ -37,7 +37,6 @@ import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Brush
-import com.chicken.bubblefloat.ui.main.component.LabeledSlider
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 
@@ -107,25 +106,9 @@ fun GameSettingsOverlay(
                 )
                 Spacer(Modifier.height(12.dp))
 
-                LabeledSlider(
-                    title = "Volume",
-                    value = ui.musicVolume,
-                    onChange = viewModel::setMusicVolume,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
 
                 Spacer(Modifier.height(8.dp))
 
-                LabeledSlider(
-                    title = "Sound",
-                    value = ui.soundVolume,
-                    onChange = viewModel::setSoundVolume,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
 
                 // ----------------------- BOTTOM BUTTONS -----------------------
                 Spacer(Modifier.height(12.dp))

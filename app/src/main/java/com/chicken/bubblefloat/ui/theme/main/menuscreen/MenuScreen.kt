@@ -44,6 +44,7 @@ import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
+import androidx.compose.runtime.getValue
 
 @Composable
 fun MenuScreen(
@@ -130,49 +131,15 @@ fun MenuScreen(
 
 @Composable
 private fun FloatingChickenBubble() {
-    val transition = rememberInfiniteTransition(label = "menu_bubble")
-    val offset by transition.animateFloat(
-        initialValue = -8f,
-        targetValue = 8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2200, easing = FastOutLinearInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "menu_bubble_anim"
+
+    Image(
+        painter = painterResource(id = R.drawable.chicken_1),
+        contentDescription = null,
+        modifier = Modifier
+            .size(160.dp),
+        contentScale = ContentScale.Fit
     )
 
-    Box(
-        modifier = Modifier
-            .size(220.dp)
-            .shadow(12.dp, shape = CircleShape, clip = false)
-            .clip(CircleShape)
-            .background(
-                brush = Brush.radialGradient(
-                    listOf(Color(0x80FFFFFF), Color(0x40FFFFFF), Color.Transparent)
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        listOf(Color(0xA0FFFFFF), Color(0x40DFF6FF), Color.Transparent)
-                    )
-                )
-        )
-
-        Image(
-            painter = painterResource(id = R.drawable.chicken_1),
-            contentDescription = null,
-            modifier = Modifier
-                .size(160.dp)
-                .padding(top = (-offset).dp),
-            contentScale = ContentScale.Fit
-        )
-    }
 }
 
 @Composable

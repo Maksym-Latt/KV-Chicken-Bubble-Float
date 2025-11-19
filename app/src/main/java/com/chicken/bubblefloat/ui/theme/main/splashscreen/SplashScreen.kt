@@ -46,16 +46,11 @@ internal fun SplashScreen(progress: Float) {
         ) {
 
             // ---- GAME TITLE (как на главном меню) ----
-            Image(
-                painter = painterResource(id = R.drawable.title),
-                contentDescription = "Game title",
-                modifier = Modifier.fillMaxWidth(1f),
-                contentScale = ContentScale.Crop
-            )
+
 
             // ---- CHICKEN HERO (как на главном меню, но меньше) ----
             Image(
-                painter = painterResource(id = R.drawable.chicken),
+                painter = painterResource(id = R.drawable.chicken_1),
                 contentDescription = "Chicken mascot",
                 modifier = Modifier
                     .fillMaxWidth(0.42f),
