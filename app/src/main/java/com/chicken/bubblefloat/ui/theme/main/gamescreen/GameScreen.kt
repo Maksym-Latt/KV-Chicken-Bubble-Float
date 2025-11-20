@@ -124,6 +124,7 @@ fun GameScreen(
     var lastLives by remember { mutableStateOf(state.lives) }
     var lastEggs by remember { mutableStateOf(state.eggs) }
     var lastInvincible by remember { mutableStateOf(state.invincibleMillis) }
+    var lastResultSummary by remember { mutableStateOf<RunSummary?>(null) }
 
     LaunchedEffect(state.lives) {
         if (state.lives < lastLives) {
@@ -146,9 +147,16 @@ fun GameScreen(
         lastInvincible = state.invincibleMillis
     }
 
-    val summary = remember(state.heightRounded, state.eggs) {
-        RunSummary(heightMeters = state.heightRounded, eggs = state.eggs)
+    LaunchedEffect(state.phase, state.heightRounded, state.eggs) {
+        if (state.phase == GameViewModel.GamePhase.Result) {
+            lastResultSummary = RunSummary(heightMeters = state.heightRounded, eggs = state.eggs)
+        }
+        if (state.phase == GameViewModel.GamePhase.Running) {
+            lastResultSummary = null
+        }
     }
+
+    val summary = lastResultSummary ?: RunSummary(heightMeters = state.heightRounded, eggs = state.eggs)
 
     BackHandler {
         when (state.phase) {
@@ -462,7 +470,15 @@ private fun GamePlayfield(
                 height = obstacle.height,
                 density = density
             )
-            val hitboxPlacement = placement.hitbox(obstacle.hitboxScale)
+            val hitboxPlacement = calculatePlacement(
+                widthPx = widthPx,
+                heightPx = heightPx,
+                x = obstacle.x,
+                y = obstacle.y,
+                width = obstacle.hitboxSize,
+                height = obstacle.hitboxSize,
+                density = density
+            )
             val spriteModifier = placement.asModifier()
             ObstacleSprite(
                 type = obstacle.type,
@@ -486,7 +502,15 @@ private fun GamePlayfield(
                 height = collectible.height,
                 density = density
             )
-            val hitboxPlacement = placement.hitbox(collectible.hitboxScale)
+            val hitboxPlacement = calculatePlacement(
+                widthPx = widthPx,
+                heightPx = heightPx,
+                x = collectible.x,
+                y = collectible.y,
+                width = collectible.hitboxSize,
+                height = collectible.hitboxSize,
+                density = density
+            )
             val spriteModifier = placement.asModifier()
             CollectibleSprite(
                 type = collectible.type,
@@ -510,7 +534,15 @@ private fun GamePlayfield(
             density = density
         )
 
-        val playerHitboxPlacement = playerPlacement.hitbox(GameEngine.PLAYER_HITBOX_SCALE)
+        val playerHitboxPlacement = calculatePlacement(
+            widthPx = widthPx,
+            heightPx = heightPx,
+            x = playerX,
+            y = GameEngine.PLAYER_Y,
+            width = GameEngine.PLAYER_HITBOX_SIZE,
+            height = GameEngine.PLAYER_HITBOX_SIZE,
+            density = density
+        )
         val playerModifier = playerPlacement.asModifier()
 
         PlayerSprite(
@@ -581,19 +613,6 @@ private fun Quadruple.asModifier(): Modifier {
     return Modifier
         .offset(first, second)
         .size(third, fourth)
-}
-
-private fun Quadruple.hitbox(scale: Float): Quadruple {
-    val baseSize = third.coerceAtMost(fourth)
-    val size = baseSize * scale
-    val offsetX = (third - size) / 2f
-    val offsetY = (fourth - size) / 2f
-    return Quadruple(
-        first = first + offsetX,
-        second = second + offsetY,
-        third = size,
-        fourth = size
-    )
 }
 
 @Composable

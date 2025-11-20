@@ -43,7 +43,7 @@ class GameEngine(
         val y: Float,
         val width: Float,
         val height: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: ObstacleType
     )
 
@@ -53,7 +53,7 @@ class GameEngine(
         val y: Float,
         val width: Float,
         val height: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: CollectibleType
     )
 
@@ -90,7 +90,7 @@ class GameEngine(
         var x: Float,
         var y: Float,
         val size: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: ObstacleType
     )
 
@@ -99,7 +99,7 @@ class GameEngine(
         var x: Float,
         var y: Float,
         val size: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: CollectibleType
     )
 
@@ -219,7 +219,7 @@ class GameEngine(
     }
 
     private fun handleCollisions() {
-        val playerHalf = PLAYER_SIZE * PLAYER_HITBOX_SCALE / 2f
+        val playerHalf = PLAYER_HITBOX_SIZE / 2f
         val playerRect = Rect(
             left = playerX - playerHalf,
             right = playerX + playerHalf,
@@ -277,7 +277,7 @@ class GameEngine(
             x = x,
             y = y,
             size = config.spriteSize,
-            hitboxScale = config.hitboxScale,
+            hitboxSize = config.spriteSize * config.hitboxScale,
             type = type
         )
     }
@@ -293,7 +293,7 @@ class GameEngine(
                 x = (baseX + offset).coerceIn(eggSize / 2f, 1f - eggSize / 2f),
                 y = 1.1f + random.nextFloat() * 0.3f,
                 size = eggSize,
-                hitboxScale = Egg.hitboxScale,
+                hitboxSize = eggSize * Egg.hitboxScale,
                 type = CollectibleType.Egg
             )
         }
@@ -306,7 +306,7 @@ class GameEngine(
             x = random.nextFloat().coerceIn(config.spriteSize / 2f, 1f - config.spriteSize / 2f),
             y = 1.1f + random.nextFloat() * 0.3f,
             size = config.spriteSize,
-            hitboxScale = config.hitboxScale,
+            hitboxSize = config.spriteSize * config.hitboxScale,
             type = CollectibleType.Bubble
         )
     }
@@ -358,7 +358,7 @@ class GameEngine(
         y = y,
         width = size,
         height = size,
-        hitboxScale = hitboxScale,
+        hitboxSize = hitboxSize,
         type = type
     )
 
@@ -368,7 +368,7 @@ class GameEngine(
         y = y,
         width = size,
         height = size,
-        hitboxScale = hitboxScale,
+        hitboxSize = hitboxSize,
         type = type
     )
 
@@ -387,7 +387,7 @@ class GameEngine(
     }
 
     private fun ActiveObstacle.toRect(): Rect {
-        val half = size * hitboxScale / 2f
+        val half = hitboxSize / 2f
         return Rect(
             left = x - half,
             right = x + half,
@@ -397,7 +397,7 @@ class GameEngine(
     }
 
     private fun ActiveCollectible.toRect(): Rect {
-        val half = size * hitboxScale / 2f
+        val half = hitboxSize / 2f
         return Rect(
             left = x - half,
             right = x + half,
@@ -411,6 +411,7 @@ class GameEngine(
         const val PLAYER_Y = 0.2f
         val PLAYER_SIZE = Player.spriteSize
         val PLAYER_HITBOX_SCALE = Player.hitboxScale
+        val PLAYER_HITBOX_SIZE = PLAYER_SIZE * PLAYER_HITBOX_SCALE
         const val POWERUP_DURATION = 5_000L
 
         private const val PLAYER_START_X = 0.5f
