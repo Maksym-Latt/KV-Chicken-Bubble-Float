@@ -48,12 +48,12 @@ import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
 import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
+import com.chicken.bubblefloat.ui.theme.main.component.GameTitle
 
 @Composable
 fun MenuScreen(
     onStartGame: () -> Unit,
     selectedSkinId: String,
-    onOpenSettings: () -> Unit,
     onOpenLocker: () -> Unit
 ) {
     Surface(color = Color(0xFFFFF4D9)) {
@@ -75,15 +75,6 @@ fun MenuScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SecondaryIconButton(onClick = onOpenSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = Color.White,
-                            modifier = Modifier.fillMaxSize(0.8f)
-                        )
-                    }
-
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -92,8 +83,9 @@ fun MenuScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    Spacer(modifier = Modifier.weight(1f))
                     GameTitle()
-
+                    Spacer(modifier = Modifier.weight(0.1f))
                     FloatingChickenBubble(skinId = selectedSkinId)
 
                     StartPrimaryButton(
@@ -107,6 +99,7 @@ fun MenuScreen(
                         onClick = onOpenLocker,
                         modifier = Modifier.fillMaxWidth(0.7f)
                     )
+                    Spacer(modifier = Modifier.weight(1f))
                 }
 
                 Spacer(modifier = Modifier.weight(2f))
@@ -114,54 +107,6 @@ fun MenuScreen(
         }
     }
 }
-
-@Composable
-fun GameTitle(
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-
-        // CHICKEN (верхний слой)
-        GradientOutlinedText(
-            text = "CHICKEN",
-            fontSize = 52.sp,
-            strokeWidth = 8f,
-            gradientColors = listOf(
-                Color(0xFF5EE7E7),
-                Color(0xFF138E90)
-            )
-        )
-
-        // BUBBLE (слегка ниже CHICKEN)
-        GradientOutlinedText(
-            text = "BUBBLE",
-            modifier = Modifier.offset(y = 30.dp),
-            fontSize = 52.sp,
-            strokeWidth = 8f,
-            gradientColors = listOf(
-                Color(0xffffffff),
-                Color(0xffff39ef)
-            )
-        )
-
-        // FLOAT (ниже остальных)
-        GradientOutlinedText(
-            text = "FLOAT",
-            modifier = Modifier.offset(y = 60.dp),
-            fontSize = 52.sp,
-            strokeWidth = 8f,
-            gradientColors = listOf(
-                Color(0xFF7CF3F1),
-                Color(0xFF5DD4FA)
-            )
-        )
-    }
-}
-
 
 @Composable
 private fun FloatingChickenBubble(skinId: String) {

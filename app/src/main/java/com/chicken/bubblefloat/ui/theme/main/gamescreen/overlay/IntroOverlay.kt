@@ -41,8 +41,6 @@ fun IntroOverlay(
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(horizontal = 24.dp, vertical = 32.dp)
-                .background(Color(0xFFFEF4FF), shape = RoundedCornerShape(28.dp))
                 .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -56,7 +54,7 @@ fun IntroOverlay(
             Text(
                 text = "Slide the bubble left and right. Avoid prickly traps and angry birds.",
                 textAlign = TextAlign.Center,
-                color = Color(0xFF3C3F63),
+                color = Color(0xfff0f3ff),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -66,7 +64,7 @@ fun IntroOverlay(
             Text(
                 text = "Collect the floating eggs to score points. Rare spheres grant a 5 second damage shield!",
                 textAlign = TextAlign.Center,
-                color = Color(0xFF3C3F63),
+                color = Color(0xfff0f3ff),
                 fontSize = 16.sp
             )
 
@@ -116,7 +114,7 @@ private fun DangerItem(icon: Int, label: String) {
         )
         Text(
             text = label,
-            color = Color(0xFF5A2B24),
+            color = Color(0xffca3724),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -135,7 +133,7 @@ private fun RewardItem(icon: Int, label: String) {
         )
         Text(
             text = label,
-            color = Color(0xFF1D5F63),
+            color = Color(0xff48fa2d),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -165,7 +163,7 @@ private fun BubbleRewardItem() {
         }
         Text(
             text = "Bubble shield",
-            color = Color(0xFF1D5F63),
+            color = Color(0xffff36ee),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center

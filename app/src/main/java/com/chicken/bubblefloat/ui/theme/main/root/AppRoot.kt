@@ -57,15 +57,8 @@ fun AppRoot(
                                 vm.startGame()
                             },
                             selectedSkinId = ui.selectedSkinId,
-                            onOpenSettings = { showMenuSettings = true },
                             onOpenLocker = { showLocker = true }
                         )
-
-                        if (showMenuSettings) {
-                            SettingsOverlay(
-                                onClose = { showMenuSettings = false },
-                            )
-                        }
 
                         if (showLocker) {
                             LockerOverlay(

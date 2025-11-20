@@ -15,8 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.unit.dp
 import com.chicken.bubblefloat.R
+import com.chicken.bubblefloat.ui.theme.main.component.GameTitle
 
 @Composable
 internal fun SplashScreen(progress: Float) {
@@ -37,6 +39,7 @@ internal fun SplashScreen(progress: Float) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -44,29 +47,34 @@ internal fun SplashScreen(progress: Float) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-
+            Spacer(modifier = Modifier.weight(2f))
             // ---- GAME TITLE (как на главном меню) ----
-
-
-            // ---- CHICKEN HERO (как на главном меню, но меньше) ----
+            GameTitle(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            )
+            Spacer(modifier = Modifier.weight(0.1f))
+            // ---- CHICKEN HERO ----
             Image(
                 painter = painterResource(id = R.drawable.chicken_1),
                 contentDescription = "Chicken mascot",
                 modifier = Modifier
-                    .fillMaxWidth(0.42f),
+                    .fillMaxWidth(0.6f),
                 contentScale = ContentScale.Crop
             )
-
+            Spacer(modifier = Modifier.weight(0.1f))
             // ---- LOADING TEXT ----
             AnimatedLoadingText(
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                modifier = Modifier
             )
-
+            Spacer(modifier = Modifier.weight(0.1f))
             // ---- PROGRESS BAR ----
             GradientProgressBar(
                 progress = progress,
                 modifier = Modifier.fillMaxWidth(0.85f)
             )
+            Spacer(modifier = Modifier.weight(2f))
         }
     }
 }
