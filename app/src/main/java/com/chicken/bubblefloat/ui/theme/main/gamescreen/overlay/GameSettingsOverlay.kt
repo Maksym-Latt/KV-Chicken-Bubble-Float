@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -14,10 +16,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MusicOff
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -33,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
+import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.SettingsToggleButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
@@ -44,17 +61,16 @@ fun GameSettingsOverlay(
     onHome: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val panelGrad = Brush.horizontalGradient(
+    val ui by viewModel.ui.collectAsStateWithLifecycle()
+
+    val panelGrad = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF93311C),
-            Color(0xFFB47234),
-            Color(0xFF93311C)
+            Color(0xFFFFF8FF),
+            Color(0xFFFF8AE8)
         )
     )
-    val cardShape = RoundedCornerShape(18.dp)
-    val borderColor = Color(0xFF2B1A09)
-
-    val ui by viewModel.ui.collectAsStateWithLifecycle()
+    val cardShape = RoundedCornerShape(36.dp)
+    val borderColor = Color(0xFF000000)
 
     Box(
         Modifier
@@ -66,76 +82,123 @@ fun GameSettingsOverlay(
                 onClick = onResume
             )
     ) {
-        SecondaryBackButton(
+        // небольшая кнопка "назад" как secondary
+        SecondaryIconButton(
             onClick = onResume,
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(horizontal = 20.dp)
-        )
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier.fillMaxSize(0.8f)
+            )
+        }
 
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(320.dp)
+                .width(260.dp)
                 .wrapContentHeight()
                 .clip(cardShape)
                 .background(panelGrad)
-                .border(2.dp, borderColor, cardShape)
+                .border(3.dp, borderColor, cardShape)
                 .padding(vertical = 24.dp, horizontal = 20.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
-                ) {},
+                ) { },
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                // заголовок как на макете
                 GradientOutlinedText(
                     text = "Paused",
                     fontSize = 40.sp,
-                    gradientColors = listOf(Color(0xFFFFFFFF), Color(0xFFFFFFFF)),
+                    gradientColors = listOf(Color.White, Color.White),
                 )
 
-                SettingsToggleButton(
-                    label = "Music",
-                    value = ui.musicEnabled,
-                    onToggle = viewModel::setMusicEnabled
-                )
+                // блок из 4 круглых иконок (2x2)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Restart
+                        SecondaryIconButton(onClick = onRetry,
+                            modifier = Modifier.size(72.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.RestartAlt,
+                                contentDescription = "Restart",
+                                tint = Color.Black,
+                                modifier = Modifier.fillMaxSize(0.7f)
+                            )
+                        }
 
-                SettingsToggleButton(
-                    label = "Sound effects",
-                    value = ui.soundEnabled,
-                    onToggle = viewModel::setSoundEnabled
-                )
+                        // Home
+                        SecondaryIconButton(onClick = onHome,
+                            modifier = Modifier.size(72.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Home",
+                                tint = Color.Black,
+                                modifier = Modifier.fillMaxSize(0.7f)
+                            )
+                        }
+                    }
 
-                SettingsToggleButton(
-                    label = "Debug hitboxes",
-                    value = ui.debugHitboxesEnabled,
-                    onToggle = viewModel::setDebugHitboxes,
-                    enabledLabel = "Shown",
-                    disabledLabel = "Hidden"
-                )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Sound toggle
+                        SecondaryIconButton(
+                            onClick = { viewModel.setSoundEnabled(!ui.soundEnabled) },
+                            modifier = Modifier.size(72.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (ui.soundEnabled)
+                                    Icons.Default.VolumeUp
+                                else
+                                    Icons.Default.VolumeOff,
+                                contentDescription = "Sound",
+                                tint = Color.Black,
+                                modifier = Modifier.fillMaxSize(0.7f)
+                            )
+                        }
+
+                        // Music toggle
+                        SecondaryIconButton(
+                            onClick = { viewModel.setMusicEnabled(!ui.musicEnabled) },
+                            modifier = Modifier.size(72.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (ui.musicEnabled)
+                                    Icons.Default.MusicNote
+                                else
+                                    Icons.Default.MusicOff,
+                                contentDescription = "Music",
+                                tint = Color.Black,
+                                modifier = Modifier.fillMaxSize(0.7f)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(8.dp))
 
                 StartPrimaryButton(
-                    text = "Continue",
+                    text = "Play",
                     onClick = onResume,
                     modifier = Modifier.fillMaxWidth()
-                )
-
-                OrangePrimaryButton(
-                    text = "Restart",
-                    onClick = onRetry,
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                )
-
-                OrangePrimaryButton(
-                    text = "Menu",
-                    onClick = onHome,
-                    modifier = Modifier.fillMaxWidth(0.9f)
                 )
             }
         }

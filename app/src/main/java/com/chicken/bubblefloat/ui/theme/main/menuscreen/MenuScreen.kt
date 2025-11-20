@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chicken.bubblefloat.R
+import com.chicken.bubblefloat.ui.main.component.BluePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
@@ -50,10 +51,6 @@ import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
 @Composable
 fun MenuScreen(
     onStartGame: () -> Unit,
-    lastResult: RunSummary?,
-    bestHeight: Int,
-    bestEggs: Int,
-    totalEggs: Int,
     selectedSkinId: String,
     onOpenSettings: () -> Unit,
     onOpenLocker: () -> Unit
@@ -86,13 +83,7 @@ fun MenuScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    EggWallet(totalEggs = totalEggs)
-
                     Spacer(modifier = Modifier.weight(1f))
-
-                    RecordsPreview(bestHeight = bestHeight, bestEggs = bestEggs)
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Column(
@@ -110,20 +101,11 @@ fun MenuScreen(
                         modifier = Modifier.fillMaxWidth(0.8f)
                     )
 
-                    OrangePrimaryButton(
+                    BluePrimaryButton(
                         text = "Locker",
                         onClick = onOpenLocker,
                         modifier = Modifier.fillMaxWidth(0.7f)
                     )
-
-                    if (lastResult != null) {
-                        Text(
-                            text = "Last flight: ${lastResult.heightMeters} m • ${lastResult.eggs} eggs",
-                            textAlign = TextAlign.Center,
-                            color = Color(0xFF39506B),
-                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
-                        )
-                    }
                 }
 
                 Spacer(modifier = Modifier.weight(2f))
@@ -160,8 +142,8 @@ fun GameTitle(
             fontSize = 52.sp,
             strokeWidth = 8f,
             gradientColors = listOf(
-                Color(0xFFF7C8FF),
-                Color(0xFF7BB7FF)
+                Color(0xffffffff),
+                Color(0xffff39ef)
             )
         )
 
@@ -185,7 +167,7 @@ private fun FloatingChickenBubble(skinId: String) {
     val skin = remember(skinId) { ChickenSkins.findById(skinId) }
     Box(
         modifier = Modifier
-            .size(180.dp)
+            .size(280.dp)
             .clip(CircleShape)
             .background(
                 brush = Brush.radialGradient(
@@ -199,67 +181,6 @@ private fun FloatingChickenBubble(skinId: String) {
             contentDescription = null,
             modifier = Modifier.fillMaxSize(0.8f),
             contentScale = ContentScale.Fit
-        )
-    }
-}
-
-@Composable
-private fun EggWallet(totalEggs: Int) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xD0FFFFFF))
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.item_egg),
-            contentDescription = null,
-            modifier = Modifier.size(28.dp)
-        )
-        Text(
-            text = totalEggs.toString(),
-            color = Color(0xFF204A64),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun RecordsPreview(bestHeight: Int, bestEggs: Int) {
-    Column(
-        modifier = Modifier
-            .width(140.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(Color(0xB0FFFFFF), Color(0x90D6FFFF))
-                )
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = "Best height",
-            color = Color(0xFF274653),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "$bestHeight m",
-            color = Color(0xFF0D4C5E),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Eggs: $bestEggs",
-            color = Color(0xFF274653),
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
         )
     }
 }

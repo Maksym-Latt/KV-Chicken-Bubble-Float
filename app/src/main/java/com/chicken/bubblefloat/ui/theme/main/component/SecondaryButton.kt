@@ -89,7 +89,6 @@ fun SecondaryIconButton(
     }
 }
 // ======================= 🎨 ФОН КРУГЛОЙ КНОПКИ =======================
-// ======================= 🎨 ФОН КРУГЛОЙ КНОПКИ =======================
 private fun DrawScope.draw3DGoldButton(
     canvasSize: Size,
     isPressed: Boolean
@@ -102,47 +101,50 @@ private fun DrawScope.draw3DGoldButton(
     val scale = minSide / 100f
 
     val cx = w / 2f
-    val cy = h / 2f                    // центр ВСЕГО (иконки и верхнего диска)
+    val cy = h / 2f
 
     // ---------- размеры слоёв ----------
-    val outerRadius = 40f * scale      // тёмный контур / подложка
-    val topRadius   = 34f * scale      // светлый верх
-    val bottomOffset = 6f * scale      // смещение нижней части вниз
+    val outerRadius = 40f * scale
+    val topRadius = 34f * scale
+    val bottomOffset = 6f * scale
 
-    // ---------- цвета в стиле PrimaryVariant.Orange ----------
+    // Тень под кнопкой
     val shadowColor = Color(0x66000000)
 
+    // 🔵 НИЖНИЙ ГРАДИЕНТ (как на картинке): 0D8C91 → 05575B
     val bottomBrush = Brush.verticalGradient(
         listOf(
-            Color(0xFFAA4A00),
-            Color(0xff814526)
+            Color(0xFF0D8C91),
+            Color(0xFF05575B)
         )
     )
 
-    val borderColor = Color(0xFF5A1F00)
+    val borderColor = Color(0xFF003034) // тёмный контур под голубой стиль
 
+    // 🔵 ВЕРХНИЙ ГРАДИЕНТ не нажатый: 6DFAFF → 0D8C91
     val topIdle = Brush.verticalGradient(
         listOf(
-            Color(0xFFFFE3A1),
-            Color(0xFFF56B00)
+            Color(0xFF6DFAFF),
+            Color(0xFF0D8C91)
         )
     )
 
+    // 🔵 ВЕРХНИЙ ГРАДИЕНТ нажатый: (делаем темнее)
     val topPressed = Brush.verticalGradient(
         listOf(
-            Color(0xFFFFC847),
-            Color(0xFFAA4A00)
+            Color(0xFF4DD8DD),
+            Color(0xFF05575B)
         )
     )
 
     val topBrush = if (isPressed) topPressed else topIdle
 
-    // =================== 1) МЯГКАЯ ТЕНЬ ПОД КНОПКОЙ ===================
+    // =================== 1) ТЕНЬ ===================
     drawOval(
         color = shadowColor,
         topLeft = Offset(
             x = cx - outerRadius * 0.9f,
-            y = cy + outerRadius * 0.35f      // тень ниже центра
+            y = cy + outerRadius * 0.35f
         ),
         size = Size(
             width = outerRadius * 1.8f,
@@ -150,7 +152,7 @@ private fun DrawScope.draw3DGoldButton(
         )
     )
 
-    // =================== 2) НИЖНЯЯ ОРАНЖЕВАЯ ПОДЛОЖКА ===================
+    // =================== 2) НИЖНИЙ ДИСК ===================
     val bottomCenter = Offset(cx, cy + bottomOffset)
 
     drawCircle(
@@ -166,18 +168,18 @@ private fun DrawScope.draw3DGoldButton(
         style = Stroke(width = 3.5f * scale)
     )
 
-    // =================== 3) ВЕРХНИЙ ЗОЛОТОЙ ДИСК ===================
+    // =================== 3) ВЕРХНИЙ ДИСК ===================
     val pressOffset = if (isPressed) 2f * scale else 0f
-    val topCenter = Offset(cx, cy + pressOffset)   // ← ЦЕНТР совпадает с центром Box
+    val topCenter = Offset(cx, cy + pressOffset)
 
-    // общий тёмный контур
+    // внешний тёмный контур
     drawCircle(
         color = borderColor,
         radius = outerRadius,
         center = topCenter
     )
 
-    // золотой диск
+    // верхний голубой диск
     drawCircle(
         brush = topBrush,
         radius = topRadius,
@@ -186,13 +188,13 @@ private fun DrawScope.draw3DGoldButton(
 
     // светлый ободок
     drawCircle(
-        color = Color(0xffd8bb7d),
+        color = Color(0xFFB6FFFF),
         radius = topRadius,
         center = topCenter,
         style = Stroke(width = 3.5f * scale)
     )
 
-    // =================== 4) ВЕРХНИЙ БЛИК ===================
+    // =================== 4) БЛИК ===================
     val highlightRadius = topRadius * 0.7f
     val highlightCenter = Offset(
         topCenter.x,

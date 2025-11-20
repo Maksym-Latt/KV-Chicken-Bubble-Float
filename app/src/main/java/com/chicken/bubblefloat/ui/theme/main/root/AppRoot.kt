@@ -56,10 +56,6 @@ fun AppRoot(
                                 showLocker = false
                                 vm.startGame()
                             },
-                            lastResult = ui.lastRun,
-                            bestHeight = ui.bestHeight,
-                            bestEggs = ui.bestEggs,
-                            totalEggs = ui.totalEggs,
                             selectedSkinId = ui.selectedSkinId,
                             onOpenSettings = { showMenuSettings = true },
                             onOpenLocker = { showLocker = true }

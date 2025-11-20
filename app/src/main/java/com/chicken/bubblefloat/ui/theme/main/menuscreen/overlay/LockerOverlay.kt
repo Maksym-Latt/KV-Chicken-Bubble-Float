@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,8 +51,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chicken.bubblefloat.R
+import com.chicken.bubblefloat.ui.main.component.AdaptiveGradientOutlinedText
+import com.chicken.bubblefloat.ui.main.component.BluePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
+import com.chicken.bubblefloat.ui.main.component.GreenPrimaryButtonWithEgg
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
+import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
+import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
 import com.chicken.bubblefloat.ui.main.locker.ChickenSkin
 import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
 
@@ -64,43 +72,42 @@ fun LockerOverlay(
 ) {
     var pageIndex by rememberSaveable { mutableStateOf(0) }
     var showInsufficientDialog by remember { mutableStateOf(false) }
+
     val skins = ChickenSkins.all
     if (pageIndex !in skins.indices) {
         pageIndex = 0
     }
+
     val currentSkin = skins[pageIndex]
     val isOwned = ownedSkins.contains(currentSkin.id)
     val isSelected = selectedSkinId == currentSkin.id
 
     Box(modifier = Modifier.fillMaxSize()) {
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xAA000000))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClose
-                )
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
         ) {
-            Box(modifier = Modifier.align(Alignment.Center)) {
-                SurfacePanel(
-                    eggs = eggs,
-                    skin = currentSkin,
-                    isOwned = isOwned,
-                    isSelected = isSelected,
-                    onPrev = { pageIndex = (pageIndex - 1 + skins.size) % skins.size },
-                    onNext = { pageIndex = (pageIndex + 1) % skins.size },
-                    onBuy = {
-                        val success = onBuySkin(currentSkin)
-                        if (!success) {
-                            showInsufficientDialog = true
-                        }
-                    },
-                    onEquip = { onSelectSkin(currentSkin.id) },
-                    onClose = onClose
-                )
-            }
+            LockerPanel(
+                eggs = eggs,
+                skin = currentSkin,
+                isOwned = isOwned,
+                isSelected = isSelected,
+                onPrev = { pageIndex = (pageIndex - 1 + skins.size) % skins.size },
+                onNext = { pageIndex = (pageIndex + 1) % skins.size },
+                onBuy = {
+                    val success = onBuySkin(currentSkin)
+                    if (!success) showInsufficientDialog = true
+                },
+                onEquip = { onSelectSkin(currentSkin.id) },
+                onClose = onClose
+            )
         }
 
         AnimatedVisibility(
@@ -111,11 +118,13 @@ fun LockerOverlay(
         ) {
             InsufficientEggsDialog(onDismiss = { showInsufficientDialog = false })
         }
+
     }
 }
 
+
 @Composable
-private fun SurfacePanel(
+private fun LockerPanel(
     eggs: Int,
     skin: ChickenSkin,
     isOwned: Boolean,
@@ -126,68 +135,59 @@ private fun SurfacePanel(
     onEquip: () -> Unit,
     onClose: () -> Unit
 ) {
-    val cardShape = RoundedCornerShape(32.dp)
-    Column(
+    Box(
         modifier = Modifier
-            .width(340.dp)
-            .clip(cardShape)
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(Color(0xFFB7E4FF), Color(0xFFFFE8EF))
-                )
-            )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {}
-            )
+            .fillMaxSize()
     ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Image(
-                    painter = painterResource(id = R.drawable.bg_menu),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-                    contentScale = ContentScale.Crop
-                )
+        Image(
+            painter = painterResource(id = R.drawable.bg_menu),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SecondaryIconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.fillMaxSize(0.8f)
+                    )
+                }
                 CurrencyHeader(eggs = eggs)
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(28.dp)
-                        .clickable(onClick = onClose)
-                )
             }
 
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+
+
+            Spacer(modifier = Modifier.weight(2f))
+
+            SkinTitle(skin = skin)
+
+            Spacer(modifier = Modifier.weight(0.5f))
+
+            SkinCarousel(
+                skin = skin,
+                onPrev = onPrev,
+                onNext = onNext
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                GradientOutlinedText(
-                    text = "LOCKER",
-                    fontSize = 32.sp,
-                    gradientColors = listOf(Color(0xFFFFFDFE), Color(0xFFE7B2FF))
-                )
-                Text(
-                    text = "Collect eggs and unlock new chickens!",
-                    color = Color(0xFF2E3E5C),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                SkinCarousel(
-                    skin = skin,
-                    onPrev = onPrev,
-                    onNext = onNext
-                )
-                SkinTitle(skin)
                 ActionButton(
                     skin = skin,
                     isOwned = isOwned,
@@ -196,6 +196,9 @@ private fun SurfacePanel(
                     onEquip = onEquip
                 )
             }
+
+            Spacer(modifier = Modifier.weight(2f))
+
         }
     }
 }
@@ -204,10 +207,9 @@ private fun SurfacePanel(
 private fun CurrencyHeader(eggs: Int) {
     Row(
         modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 16.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xCC1B8E5F))
+            .background(Color(0xFF2CC44A))
+            .border(2.dp, Color.Black, RoundedCornerShape(999.dp))
             .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -215,7 +217,7 @@ private fun CurrencyHeader(eggs: Int) {
         Image(
             painter = painterResource(id = R.drawable.item_egg),
             contentDescription = null,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(26.dp)
         )
         Text(
             text = eggs.toString(),
@@ -244,24 +246,15 @@ private fun SkinCarousel(
                 tint = Color.White
             )
         }
-        Box(
+
+        Image(
+            painter = painterResource(id = skin.spriteRes),
+            contentDescription = null,
             modifier = Modifier
-                .size(190.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        listOf(Color(0x33FFFFFF), Color(0x33000000))
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = skin.spriteRes),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(0.9f),
-                contentScale = ContentScale.Fit
-            )
-        }
+                .size(240.dp),
+            contentScale = ContentScale.Fit
+        )
+
         ArrowButton(onClick = onNext) {
             Icon(
                 imageVector = Icons.Default.ArrowForward,
@@ -276,9 +269,10 @@ private fun SkinCarousel(
 private fun ArrowButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(46.dp)
             .clip(CircleShape)
             .background(Color(0xFF3C5A81))
+            .border(3.dp, Color.White, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -286,29 +280,48 @@ private fun ArrowButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     }
 }
 
+private val CHICKEN_COLOR = Color(0xFF00C2B8)
+
 @Composable
 private fun SkinTitle(skin: ChickenSkin) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = skin.title,
-            textAlign = TextAlign.Center,
-            fontSize = 32.sp,
-            lineHeight = 34.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = skin.accentColor
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFFFF6EC))
-                .border(2.dp, skin.accentColor, RoundedCornerShape(16.dp))
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text = "Premium chicken bubble",
-                color = Color(0xFF3A4A64),
-                fontWeight = FontWeight.Medium
+    val rawLines = skin.title.uppercase().split("\n")
+
+    // --- добавляем невидимую вторую строку для первой курицы ---
+    val lines = if (rawLines.size == 1) {
+        listOf(rawLines[0], "CHICKEN") // вторая строка невидимая
+    } else rawLines
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy((-6).dp)
+    ) {
+        lines.forEachIndexed { index, line ->
+
+            val isChickenLine = line.contains("CHICKEN")
+
+            val gradient = if (isChickenLine) {
+                listOf(CHICKEN_COLOR, CHICKEN_COLOR)
+            } else {
+                listOf(
+                    skin.accentColor.copy(alpha = 0.95f),
+                    skin.accentColor
+                )
+            }
+
+            val alpha = when {
+                rawLines.size == 1 && index == 1 -> 0f
+                else -> 1f
+            }
+
+            AdaptiveGradientOutlinedText(
+                text = line,
+                fontSize = 46.sp,
+                strokeWidth = 7f,
+                gradientColors = gradient,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { this.alpha = alpha }
             )
         }
     }
@@ -324,27 +337,59 @@ private fun ActionButton(
 ) {
     when {
         isSelected -> {
-            OrangePrimaryButton(
-                text = "Selected",
+            BluePrimaryButton(
+                text = "SELECTED",
                 onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-                enabled = false
+                modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
+
         isOwned -> {
-            OrangePrimaryButton(
-                text = "Equip",
+            BluePrimaryButton(
+                text = "SELECT",
                 onClick = onEquip,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
+
         else -> {
-            OrangePrimaryButton(
-                text = "Buy for ${skin.price}",
+            GreenPrimaryButtonWithEgg(
+                price = skin.price,
                 onClick = onBuy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
+    }
+}
+
+
+@Composable
+private fun LockerPrimaryButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    content: @Composable RowScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .height(56.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF36D14C),
+                        Color(0xFF178B28)
+                    )
+                )
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            content = content
+        )
     }
 }
 
@@ -381,11 +426,17 @@ private fun InsufficientEggsDialog(onDismiss: () -> Unit) {
                 textAlign = TextAlign.Center,
                 color = Color(0xFF5D2A42)
             )
-            OrangePrimaryButton(
-                text = "Okay",
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            )
+            LockerPrimaryButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onDismiss
+            ) {
+                Text(
+                    text = "OKAY",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.chicken.bubblefloat.ui.main.component.BluePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
@@ -122,7 +123,7 @@ fun SettingsOverlay(
                     fontWeight = FontWeight.Medium
                 )
 
-                OrangePrimaryButton(
+                BluePrimaryButton(
                     text = "Close",
                     onClick = onClose,
                     modifier = Modifier.fillMaxWidth(0.9f)

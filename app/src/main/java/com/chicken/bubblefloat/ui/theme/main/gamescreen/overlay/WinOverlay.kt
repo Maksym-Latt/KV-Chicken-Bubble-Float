@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chicken.bubblefloat.R
+import com.chicken.bubblefloat.ui.main.component.BluePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
@@ -83,7 +84,7 @@ fun WinOverlay(
                     onClick = onRetry,
                     modifier = Modifier.fillMaxWidth(0.8f)
                 )
-                OrangePrimaryButton(
+                BluePrimaryButton(
                     text = "Menu",
                     onClick = onHome,
                     modifier = Modifier.width(220.dp)
