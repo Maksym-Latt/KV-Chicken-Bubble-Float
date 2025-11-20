@@ -72,6 +72,7 @@ import kotlin.math.min
 @Composable
 fun GameScreen(
     onExitToMenu: (RunSummary) -> Unit,
+    onRecordRun: (RunSummary) -> Unit,
     selectedSkinId: String,
     viewModel: GameViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -212,7 +213,10 @@ fun GameScreen(
             if (state.phase == GameViewModel.GamePhase.Result) {
                 WinOverlay(
                     summary = summary,
-                    onRetry = viewModel::retry,
+                    onRetry = {
+                        onRecordRun(summary)
+                        viewModel.retry()
+                    },
                     onHome = {
                         exitingToMenu = true
                         viewModel.exitToMenu()
@@ -404,16 +408,15 @@ private fun GamePlayfield(
                 height = obstacle.height,
                 density = density
             )
-            val spriteModifier = Modifier
-                .offset(placement.first, placement.second)
-                .size(placement.third, placement.fourth)
+            val hitboxPlacement = placement.hitbox(obstacle.hitboxScale)
+            val spriteModifier = placement.asModifier()
             ObstacleSprite(
                 type = obstacle.type,
                 modifier = spriteModifier
             )
             if (showDebugHitboxes) {
                 DebugHitbox(
-                    modifier = spriteModifier,
+                    modifier = hitboxPlacement.asModifier(),
                     color = Color(0xFFFF4D4D)
                 )
             }
@@ -429,16 +432,15 @@ private fun GamePlayfield(
                 height = collectible.height,
                 density = density
             )
-            val spriteModifier = Modifier
-                .offset(placement.first, placement.second)
-                .size(placement.third, placement.fourth)
+            val hitboxPlacement = placement.hitbox(collectible.hitboxScale)
+            val spriteModifier = placement.asModifier()
             CollectibleSprite(
                 type = collectible.type,
                 modifier = spriteModifier
             )
             if (showDebugHitboxes) {
                 DebugHitbox(
-                    modifier = spriteModifier,
+                    modifier = hitboxPlacement.asModifier(),
                     color = Color(0xFF00FFA3)
                 )
             }
@@ -454,9 +456,8 @@ private fun GamePlayfield(
             density = density
         )
 
-        val playerModifier = Modifier
-            .offset(playerPlacement.first, playerPlacement.second)
-            .size(playerPlacement.third, playerPlacement.fourth)
+        val playerHitboxPlacement = playerPlacement.hitbox(GameEngine.PLAYER_HITBOX_SCALE)
+        val playerModifier = playerPlacement.asModifier()
 
         PlayerSprite(
             modifier = playerModifier,
@@ -464,7 +465,7 @@ private fun GamePlayfield(
         )
         if (showDebugHitboxes) {
             DebugHitbox(
-                modifier = playerModifier,
+                modifier = playerHitboxPlacement.asModifier(),
                 color = Color(0xFF4DB2FF)
             )
         }
@@ -506,6 +507,25 @@ private data class Quadruple(
     val third: Dp,
     val fourth: Dp
 )
+
+private fun Quadruple.asModifier(): Modifier {
+    return Modifier
+        .offset(first, second)
+        .size(third, fourth)
+}
+
+private fun Quadruple.hitbox(scale: Float): Quadruple {
+    val baseSize = third.coerceAtMost(fourth)
+    val size = baseSize * scale
+    val offsetX = (third - size) / 2f
+    val offsetY = (fourth - size) / 2f
+    return Quadruple(
+        first = first + offsetX,
+        second = second + offsetY,
+        third = size,
+        fourth = size
+    )
+}
 
 @Composable
 private fun ObstacleSprite(type: GameEngine.ObstacleType, modifier: Modifier) {

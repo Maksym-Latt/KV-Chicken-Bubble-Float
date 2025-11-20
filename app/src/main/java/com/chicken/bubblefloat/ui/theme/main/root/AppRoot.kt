@@ -84,6 +84,7 @@ fun AppRoot(
                 MainViewModel.Screen.Game ->
                     GameScreen(
                         onExitToMenu = vm::backToMenu,
+                        onRecordRun = vm::recordRun,
                         selectedSkinId = ui.selectedSkinId
                     )
             }

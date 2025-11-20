@@ -43,6 +43,7 @@ class GameEngine(
         val y: Float,
         val width: Float,
         val height: Float,
+        val hitboxScale: Float,
         val type: ObstacleType
     )
 
@@ -52,6 +53,7 @@ class GameEngine(
         val y: Float,
         val width: Float,
         val height: Float,
+        val hitboxScale: Float,
         val type: CollectibleType
     )
 
@@ -356,6 +358,7 @@ class GameEngine(
         y = y,
         width = size,
         height = size,
+        hitboxScale = hitboxScale,
         type = type
     )
 
@@ -365,6 +368,7 @@ class GameEngine(
         y = y,
         width = size,
         height = size,
+        hitboxScale = hitboxScale,
         type = type
     )
 
