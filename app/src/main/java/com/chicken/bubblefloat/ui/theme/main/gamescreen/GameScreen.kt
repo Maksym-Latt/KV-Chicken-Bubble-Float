@@ -1,6 +1,16 @@
 package com.chicken.bubblefloat.ui.main.gamescreen
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,6 +53,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -71,6 +82,7 @@ import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
 import com.chicken.bubblefloat.ui.theme.main.component.CurrencyHeader
 import kotlin.math.min
+import kotlin.math.sin
 
 @Composable
 fun GameScreen(
@@ -85,6 +97,8 @@ fun GameScreen(
     val audio = rememberAudioController()
     val lifecycleOwner = LocalLifecycleOwner.current
     var exitingToMenu by remember { mutableStateOf(false) }
+    var hitEventCount by remember { mutableStateOf(0) }
+    var eggPickupCount by remember { mutableStateOf(0) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -129,6 +143,7 @@ fun GameScreen(
     LaunchedEffect(state.lives) {
         if (state.lives < lastLives) {
             audio.playChickenHit()
+            hitEventCount++
         }
         lastLives = state.lives
     }
@@ -136,6 +151,7 @@ fun GameScreen(
     LaunchedEffect(state.eggs) {
         if (state.eggs > lastEggs) {
             audio.playChickenPickup()
+            eggPickupCount++
         }
         lastEggs = state.eggs
     }
@@ -201,7 +217,10 @@ fun GameScreen(
                     collectibles = state.collectibles,
                     onControl = viewModel::movePlayer,
                     showDebugHitboxes = settingsUi.debugHitboxesEnabled,
-                    playerSkinId = selectedSkinId
+                    playerSkinId = selectedSkinId,
+                    hitEventCount = hitEventCount,
+                    eggPickupCount = eggPickupCount,
+                    isInvincible = state.invincibleMillis > 0
                 )
             }
 
@@ -432,7 +451,10 @@ private fun GamePlayfield(
     collectibles: List<GameViewModel.Collectible>,
     onControl: (Float) -> Unit,
     showDebugHitboxes: Boolean,
-    playerSkinId: String
+    playerSkinId: String,
+    hitEventCount: Int,
+    eggPickupCount: Int,
+    isInvincible: Boolean
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -460,6 +482,102 @@ private fun GamePlayfield(
         val widthPx = with(density) { maxWidth.toPx() }
         val heightPx = with(density) { maxHeight.toPx() }
 
+        val bobAmplitudePx = with(density) { 6.dp.toPx() }
+        val tiltAmplitude = 6f
+
+        val infiniteTransition = rememberInfiniteTransition(label = "playfieldInfinite")
+        val obstacleBob by infiniteTransition.animateFloat(
+            initialValue = -bobAmplitudePx,
+            targetValue = bobAmplitudePx,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "obstacleBob"
+        )
+        val obstacleTilt by infiniteTransition.animateFloat(
+            initialValue = -tiltAmplitude,
+            targetValue = tiltAmplitude,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "obstacleTilt"
+        )
+
+        val eggPulse by infiniteTransition.animateFloat(
+            initialValue = 0.9f,
+            targetValue = 1.08f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1300, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "eggPulse"
+        )
+        val eggGlow by infiniteTransition.animateFloat(
+            initialValue = 0.45f,
+            targetValue = 0.9f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1300, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "eggGlow"
+        )
+
+        val bubblePulseScale by infiniteTransition.animateFloat(
+            initialValue = 0.94f,
+            targetValue = 1.06f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1100, easing = LinearOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "bubblePulse"
+        )
+        val bubblePulseAlpha by infiniteTransition.animateFloat(
+            initialValue = 0.7f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1100, easing = LinearOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "bubbleAlpha"
+        )
+
+        val invinciblePulse by infiniteTransition.animateFloat(
+            initialValue = 0.92f,
+            targetValue = 1.08f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "invinciblePulse"
+        )
+        val invincibleGlow by infiniteTransition.animateFloat(
+            initialValue = 0.2f,
+            targetValue = 0.55f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 900, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "invincibleGlow"
+        )
+
+        val hitShake = remember { Animatable(0f) }
+        LaunchedEffect(hitEventCount) {
+            if (hitEventCount > 0) {
+                hitShake.snapTo(1f)
+                hitShake.animateTo(0f, animationSpec = spring(dampingRatio = 0.5f, stiffness = 220f))
+            }
+        }
+
+        val eggBurst = remember { Animatable(0f) }
+        LaunchedEffect(eggPickupCount) {
+            if (eggPickupCount > 0) {
+                eggBurst.snapTo(1f)
+                eggBurst.animateTo(0f, animationSpec = tween(durationMillis = 550, easing = LinearOutSlowInEasing))
+            }
+        }
+
         obstacles.forEach { obstacle ->
             val placement = calculatePlacement(
                 widthPx = widthPx,
@@ -480,9 +598,22 @@ private fun GamePlayfield(
                 density = density
             )
             val spriteModifier = placement.asModifier()
+            val swayDirection = if (obstacle.id % 2 == 0) 1f else -1f
+            val animatedModifier = when (obstacle.type) {
+                GameEngine.ObstacleType.Thorns -> spriteModifier.graphicsLayer {
+                    translationY = obstacleBob * 0.35f * swayDirection
+                    rotationZ = obstacleTilt * 0.6f * swayDirection
+                }
+                GameEngine.ObstacleType.Crow -> spriteModifier.graphicsLayer {
+                    translationY = obstacleBob * swayDirection
+                    rotationZ = obstacleTilt * swayDirection
+                    scaleX = 1f + 0.04f * swayDirection * (obstacleTilt / tiltAmplitude)
+                    scaleY = scaleX
+                }
+            }
             ObstacleSprite(
                 type = obstacle.type,
-                modifier = spriteModifier
+                modifier = animatedModifier
             )
             if (showDebugHitboxes) {
                 DebugHitbox(
@@ -512,9 +643,21 @@ private fun GamePlayfield(
                 density = density
             )
             val spriteModifier = placement.asModifier()
+            val animatedModifier = when (collectible.type) {
+                GameEngine.CollectibleType.Egg -> spriteModifier.graphicsLayer {
+                    scaleX = eggPulse
+                    scaleY = eggPulse
+                    alpha = 0.7f + 0.3f * eggGlow
+                }
+                GameEngine.CollectibleType.Bubble -> spriteModifier.graphicsLayer {
+                    scaleX = bubblePulseScale
+                    scaleY = bubblePulseScale
+                    alpha = bubblePulseAlpha
+                }
+            }
             CollectibleSprite(
                 type = collectible.type,
-                modifier = spriteModifier
+                modifier = animatedModifier
             )
             if (showDebugHitboxes) {
                 DebugHitbox(
@@ -544,11 +687,48 @@ private fun GamePlayfield(
             density = density
         )
         val playerModifier = playerPlacement.asModifier()
+        val wobbleTranslation = sin(hitShake.value * 22f) * with(density) { 12.dp.toPx() }
+        val wobbleRotation = sin(hitShake.value * 30f) * 6f
+        val wobbleScale = 1f + 0.1f * hitShake.value
+        val auraScale = if (isInvincible) invinciblePulse else 1f + eggBurst.value * 0.35f
+        val auraAlpha = if (isInvincible) invincibleGlow else eggBurst.value
 
-        PlayerSprite(
-            modifier = playerModifier,
-            skinId = playerSkinId
-        )
+        Box(
+            modifier = playerModifier.graphicsLayer {
+                translationX = wobbleTranslation
+                rotationZ = wobbleRotation
+                scaleX = wobbleScale
+                scaleY = wobbleScale
+            },
+            contentAlignment = Alignment.Center
+        ) {
+            if (auraAlpha > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            alpha = auraAlpha
+                            scaleX = auraScale
+                            scaleY = auraScale
+                        }
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0x66FFF2FF),
+                                    Color(0x55C3F1FF),
+                                    Color.Transparent
+                                ),
+                                center = Offset(0.5f, 0.5f)
+                            )
+                        )
+                )
+            }
+
+            PlayerSprite(
+                modifier = Modifier.fillMaxSize(),
+                skinId = playerSkinId
+            )
+        }
         if (showDebugHitboxes) {
             DebugHitbox(
                 modifier = playerHitboxPlacement.asModifier(),
