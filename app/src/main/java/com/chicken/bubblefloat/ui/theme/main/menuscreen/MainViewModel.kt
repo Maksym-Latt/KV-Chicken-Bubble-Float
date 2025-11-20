@@ -58,19 +58,23 @@ class MainViewModel @Inject constructor(
     }
 
     fun backToMenu(result: RunSummary) {
+        recordRun(result)
+        _ui.update { current -> current.copy(screen = Screen.Menu) }
+    }
+
+    fun backToMenu() {
+        _ui.update { it.copy(screen = Screen.Menu) }
+    }
+
+    fun recordRun(result: RunSummary) {
         progressRepository.addEggs(result.eggs)
         _ui.update { current ->
             current.copy(
-                screen = Screen.Menu,
                 lastRun = result,
                 bestHeight = maxOf(current.bestHeight, result.heightMeters),
                 bestEggs = maxOf(current.bestEggs, result.eggs)
             )
         }
-    }
-
-    fun backToMenu() {
-        _ui.update { it.copy(screen = Screen.Menu) }
     }
 
     fun purchaseSkin(skin: ChickenSkin): Boolean {
