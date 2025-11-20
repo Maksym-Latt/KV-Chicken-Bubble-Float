@@ -487,17 +487,32 @@ private fun calculatePlacement(
     height: Float,
     density: Density
 ): Quadruple {
+
+    // Единый квадратный масштаб
     val scale = min(widthPx, heightPx)
-    val halfWidthPx = width * scale / 2f
-    val halfHeightPx = height * scale / 2f
-    val leftPx = widthPx * x - halfWidthPx
-    val topPx = heightPx - heightPx * y - halfHeightPx
+
+    // Игровая область (квадрат)
+    val gameWidth = scale
+    val gameHeight = scale
+
+    // Центрируем игровую область по экрану
+    val offsetX = (widthPx - gameWidth) / 2f
+    val offsetY = (heightPx - gameHeight) / 2f
+
+    // Координаты в пикселях, одинаковые для X и Y
+    val pxX = offsetX + x * gameWidth
+    val pxY = offsetY + (1f - y) * gameHeight
+
+    // Размеры в пикселях
     val wPx = width * scale
     val hPx = height * scale
-    val left = with(density) { leftPx.toDp() }
-    val top = with(density) { topPx.toDp() }
+
+    // Сдвигаем влево/вверх на половину размера
+    val left = with(density) { (pxX - wPx / 2f).toDp() }
+    val top = with(density) { (pxY - hPx / 2f).toDp() }
     val w = with(density) { wPx.toDp() }
     val h = with(density) { hPx.toDp() }
+
     return Quadruple(left, top, w, h)
 }
 
