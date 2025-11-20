@@ -35,6 +35,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +52,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -125,10 +135,14 @@ fun GameScreen(
     var lastEggs by remember { mutableStateOf(state.eggs) }
     var lastInvincible by remember { mutableStateOf(state.invincibleMillis) }
     var lastResultSummary by remember { mutableStateOf<RunSummary?>(null) }
+    var hitAnimationTrigger by remember { mutableStateOf(0) }
+    var pickupAnimationTrigger by remember { mutableStateOf(0) }
+    var powerupAnimationTrigger by remember { mutableStateOf(0) }
 
     LaunchedEffect(state.lives) {
         if (state.lives < lastLives) {
             audio.playChickenHit()
+            hitAnimationTrigger++
         }
         lastLives = state.lives
     }
@@ -136,6 +150,7 @@ fun GameScreen(
     LaunchedEffect(state.eggs) {
         if (state.eggs > lastEggs) {
             audio.playChickenPickup()
+            pickupAnimationTrigger++
         }
         lastEggs = state.eggs
     }
@@ -143,6 +158,7 @@ fun GameScreen(
     LaunchedEffect(state.invincibleMillis) {
         if (state.invincibleMillis > 0 && lastInvincible == 0L) {
             audio.playRareChicken()
+            powerupAnimationTrigger++
         }
         lastInvincible = state.invincibleMillis
     }
@@ -201,7 +217,11 @@ fun GameScreen(
                     collectibles = state.collectibles,
                     onControl = viewModel::movePlayer,
                     showDebugHitboxes = settingsUi.debugHitboxesEnabled,
-                    playerSkinId = selectedSkinId
+                    playerSkinId = selectedSkinId,
+                    isInvincible = state.invincibleMillis > 0,
+                    hitAnimationTrigger = hitAnimationTrigger,
+                    collectAnimationTrigger = pickupAnimationTrigger,
+                    powerupAnimationTrigger = powerupAnimationTrigger
                 )
             }
 
@@ -432,7 +452,11 @@ private fun GamePlayfield(
     collectibles: List<GameViewModel.Collectible>,
     onControl: (Float) -> Unit,
     showDebugHitboxes: Boolean,
-    playerSkinId: String
+    playerSkinId: String,
+    isInvincible: Boolean,
+    hitAnimationTrigger: Int,
+    collectAnimationTrigger: Int,
+    powerupAnimationTrigger: Int
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -547,7 +571,11 @@ private fun GamePlayfield(
 
         PlayerSprite(
             modifier = playerModifier,
-            skinId = playerSkinId
+            skinId = playerSkinId,
+            isInvincible = isInvincible,
+            hitAnimationTrigger = hitAnimationTrigger,
+            collectAnimationTrigger = collectAnimationTrigger,
+            powerupAnimationTrigger = powerupAnimationTrigger
         )
         if (showDebugHitboxes) {
             DebugHitbox(
@@ -660,18 +688,160 @@ private fun CollectibleSprite(type: GameEngine.CollectibleType, modifier: Modifi
 }
 
 @Composable
-private fun PlayerSprite(modifier: Modifier, skinId: String) {
+private fun PlayerSprite(
+    modifier: Modifier,
+    skinId: String,
+    isInvincible: Boolean,
+    hitAnimationTrigger: Int,
+    collectAnimationTrigger: Int,
+    powerupAnimationTrigger: Int
+) {
     val skin = remember(skinId) { ChickenSkins.findById(skinId) }
+    val density = LocalDensity.current
+
+    val shakeOffset = remember { Animatable(0f) }
+    val hitFlash = remember { Animatable(0f) }
+    val pickupScale = remember { Animatable(1f) }
+    val powerupScale = remember { Animatable(1f) }
+
+    val idleTransition = rememberInfiniteTransition(label = "playerIdle")
+    val bobOffset by idleTransition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bobOffset"
+    )
+    val bobTilt by idleTransition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bobTilt"
+    )
+
+    val auraPulseTransition = rememberInfiniteTransition(label = "aura")
+    val auraPulseScale by auraPulseTransition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "auraPulse"
+    )
+    val auraAlpha by animateFloatAsState(
+        targetValue = if (isInvincible) 1f else 0f,
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
+        label = "auraAlpha"
+    )
+
+    LaunchedEffect(hitAnimationTrigger) {
+        val impact = with(density) { 10.dp.toPx() }
+        shakeOffset.snapTo(0f)
+        hitFlash.snapTo(0.4f)
+        hitFlash.animateTo(0f, animationSpec = tween(durationMillis = 280))
+        shakeOffset.animateTo(
+            targetValue = -impact,
+            animationSpec = tween(durationMillis = 70, easing = FastOutSlowInEasing)
+        )
+        shakeOffset.animateTo(
+            targetValue = impact,
+            animationSpec = tween(durationMillis = 90, easing = FastOutSlowInEasing)
+        )
+        shakeOffset.animateTo(
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 120, easing = FastOutSlowInEasing)
+        )
+    }
+
+    LaunchedEffect(collectAnimationTrigger) {
+        pickupScale.snapTo(1f)
+        pickupScale.animateTo(
+            targetValue = 1.15f,
+            animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing)
+        )
+        pickupScale.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
+
+    LaunchedEffect(powerupAnimationTrigger) {
+        powerupScale.snapTo(1.2f)
+        powerupScale.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    }
+
+    val combinedScale = pickupScale.value * powerupScale.value
+
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
+        if (auraAlpha > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val pxOffset = shakeOffset.value
+                        translationX = pxOffset
+                        translationY = with(density) { bobOffset.dp.toPx() / 2f }
+                        scaleX = auraPulseScale * combinedScale
+                        scaleY = auraPulseScale * combinedScale
+                        alpha = auraAlpha
+                    }
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0x66C5F8FF),
+                                Color(0x3389E6FF),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+        }
+
         Image(
             painter = painterResource(id = skin.spriteRes),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.85f),
+            modifier = Modifier
+                .fillMaxSize(0.85f)
+                .graphicsLayer {
+                    translationX = shakeOffset.value
+                    translationY = with(density) { bobOffset.dp.toPx() }
+                    rotationZ = bobTilt
+                    scaleX = combinedScale
+                    scaleY = combinedScale
+                },
             contentScale = ContentScale.Fit
         )
+
+        if (hitFlash.value > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        alpha = hitFlash.value
+                    }
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(0x66FF7B7B))
+            )
+        }
     }
 }
 
