@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.chicken.bubblefloat.ui.main.component.BluePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.GradientOutlinedText
 import com.chicken.bubblefloat.ui.main.component.OrangePrimaryButton
 import com.chicken.bubblefloat.ui.main.component.SecondaryBackButton
@@ -82,21 +83,6 @@ fun GameSettingsOverlay(
                 onClick = onResume
             )
     ) {
-        // небольшая кнопка "назад" как secondary
-        SecondaryIconButton(
-            onClick = onResume,
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.fillMaxSize(0.8f)
-            )
-        }
-
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -105,7 +91,7 @@ fun GameSettingsOverlay(
                 .clip(cardShape)
                 .background(panelGrad)
                 .border(3.dp, borderColor, cardShape)
-                .padding(vertical = 24.dp, horizontal = 20.dp)
+                .padding(vertical = 14.dp, horizontal = 10.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -134,23 +120,23 @@ fun GameSettingsOverlay(
                     ) {
                         // Restart
                         SecondaryIconButton(onClick = onRetry,
-                            modifier = Modifier.size(72.dp)) {
+                            modifier = Modifier.size(92.dp)) {
                             Icon(
                                 imageVector = Icons.Default.RestartAlt,
                                 contentDescription = "Restart",
                                 tint = Color.Black,
-                                modifier = Modifier.fillMaxSize(0.7f)
+                                modifier = Modifier.fillMaxSize(0.9f)
                             )
                         }
 
                         // Home
                         SecondaryIconButton(onClick = onHome,
-                            modifier = Modifier.size(72.dp)) {
+                            modifier = Modifier.size(92.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Home,
                                 contentDescription = "Home",
                                 tint = Color.Black,
-                                modifier = Modifier.fillMaxSize(0.7f)
+                                modifier = Modifier.fillMaxSize(0.9f)
                             )
                         }
                     }
@@ -162,7 +148,7 @@ fun GameSettingsOverlay(
                         // Sound toggle
                         SecondaryIconButton(
                             onClick = { viewModel.setSoundEnabled(!ui.soundEnabled) },
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier.size(92.dp)
                         ) {
                             Icon(
                                 imageVector = if (ui.soundEnabled)
@@ -171,14 +157,14 @@ fun GameSettingsOverlay(
                                     Icons.Default.VolumeOff,
                                 contentDescription = "Sound",
                                 tint = Color.Black,
-                                modifier = Modifier.fillMaxSize(0.7f)
+                                modifier = Modifier.fillMaxSize(0.9f)
                             )
                         }
 
                         // Music toggle
                         SecondaryIconButton(
                             onClick = { viewModel.setMusicEnabled(!ui.musicEnabled) },
-                            modifier = Modifier.size(72.dp)
+                            modifier = Modifier.size(92.dp)
                         ) {
                             Icon(
                                 imageVector = if (ui.musicEnabled)
@@ -187,19 +173,22 @@ fun GameSettingsOverlay(
                                     Icons.Default.MusicOff,
                                 contentDescription = "Music",
                                 tint = Color.Black,
-                                modifier = Modifier.fillMaxSize(0.7f)
+                                modifier = Modifier.fillMaxSize(0.9f)
                             )
                         }
                     }
+
+                    Spacer(Modifier.height(2.dp))
+
+                    BluePrimaryButton(
+                        text = "Play",
+                        onClick = onResume,
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    )
+                    Spacer(Modifier.height(2.dp))
+
                 }
 
-                Spacer(Modifier.height(8.dp))
-
-                StartPrimaryButton(
-                    text = "Play",
-                    onClick = onResume,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         }
     }

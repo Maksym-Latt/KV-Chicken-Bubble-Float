@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -67,6 +69,7 @@ import com.chicken.bubblefloat.ui.main.gamescreen.overlay.IntroOverlay
 import com.chicken.bubblefloat.ui.main.gamescreen.overlay.WinOverlay
 import com.chicken.bubblefloat.ui.main.menuscreen.RunSummary
 import com.chicken.bubblefloat.ui.main.settings.SettingsViewModel
+import com.chicken.bubblefloat.ui.theme.main.component.CurrencyHeader
 import kotlin.math.min
 
 @Composable
@@ -237,7 +240,10 @@ private fun GameHud(
     isInvincible: Boolean,
     onPause: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // --- Верхний ряд: пауза + зелёная валюта ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -251,24 +257,97 @@ private fun GameHud(
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            HeartStatus(
-                lives = lives,
-                isInvincible = isInvincible,
-                invincibleProgress = invincibleProgress
-            )
-
             Spacer(modifier = Modifier.weight(1f))
 
-            EggCounter(eggs = eggs)
+            CurrencyHeader(
+                eggs = eggs,
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        HeightBadge(height = height)
+        // --- Ряд с сердцами по центру ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            HeartRow(lives = lives)
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+
+        InfinityRainbowBar(
+            progress = invincibleProgress,
+            isActive = isInvincible
+        )
     }
 }
+
+// ---------- Infinity rainbow bar под сердцами ----------
+
+@Composable
+private fun InfinityRainbowBar(
+    progress: Float,
+    isActive: Boolean
+) {
+    val clamped = progress.coerceIn(0f, 1f)
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // полоса прогресса
+        Box(
+            modifier = Modifier
+                .width(160.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(Color(0xFFEDEDED))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(if (isActive) clamped else 0f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFFFC4CFF),
+                                Color(0xFFB446FF),
+                                Color(0xFF7F3BFF)
+                            )
+                        )
+                    )
+            )
+        }
+
+        // подпись "Infinity rainbow" как на скрине
+        Box {
+            Text(
+                text = "Infinity rainbow",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF141414),
+                style = LocalTextStyle.current.copy(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.7f),
+                        offset = Offset(2f, 2f),
+                        blurRadius = 8f
+                    )
+                )
+            )
+            Text(
+                text = "Infinity rainbow",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun HeartRow(lives: Int) {
@@ -282,31 +361,6 @@ private fun HeartRow(lives: Int) {
                 colorFilter = if (active) null else ColorFilter.tint(Color(0x80FFFFFF))
             )
         }
-    }
-}
-
-@Composable
-private fun EggCounter(eggs: Int) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xD0FFFFFF))
-            .padding(horizontal = 18.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.item_egg),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp)
-        )
-        Text(
-            text = eggs.toString(),
-            color = Color(0xFF16435C),
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            maxLines = 1
-        )
     }
 }
 

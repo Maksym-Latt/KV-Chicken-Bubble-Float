@@ -7,7 +7,7 @@ object GameDimensions {
         val hitboxScale: Float = 0.7f
     )
 
-    val Player = Element(spriteSize = 0.26f, hitboxScale = 0.75f)
+    val Player = Element(spriteSize = 0.26f, hitboxScale = 0.60f)
     val Thorn = Element(spriteSize = 0.22f)
     val Crow = Element(spriteSize = 0.3f, hitboxScale = 0.65f)
     val Egg = Element(spriteSize = 0.13f, hitboxScale = 0.8f)

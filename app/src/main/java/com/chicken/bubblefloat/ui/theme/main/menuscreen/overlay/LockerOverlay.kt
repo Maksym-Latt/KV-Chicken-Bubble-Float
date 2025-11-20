@@ -60,6 +60,7 @@ import com.chicken.bubblefloat.ui.main.component.SecondaryIconButton
 import com.chicken.bubblefloat.ui.main.component.StartPrimaryButton
 import com.chicken.bubblefloat.ui.main.locker.ChickenSkin
 import com.chicken.bubblefloat.ui.main.locker.ChickenSkins
+import com.chicken.bubblefloat.ui.theme.main.component.CurrencyHeader
 
 @Composable
 fun LockerOverlay(
@@ -200,31 +201,6 @@ private fun LockerPanel(
             Spacer(modifier = Modifier.weight(2f))
 
         }
-    }
-}
-
-@Composable
-private fun CurrencyHeader(eggs: Int) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(Color(0xFF2CC44A))
-            .border(2.dp, Color.Black, RoundedCornerShape(999.dp))
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.item_egg),
-            contentDescription = null,
-            modifier = Modifier.size(26.dp)
-        )
-        Text(
-            text = eggs.toString(),
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
