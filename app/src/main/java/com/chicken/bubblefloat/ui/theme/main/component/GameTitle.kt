@@ -36,7 +36,7 @@ fun GameTitle(
         // BUBBLE (слегка ниже CHICKEN)
         GradientOutlinedText(
             text = "BUBBLE",
-            modifier = Modifier.offset(y = 30.dp),
+            modifier = Modifier.offset(y = 35.dp),
             fontSize = 52.sp,
             strokeWidth = 8f,
             gradientColors = listOf(
@@ -48,7 +48,7 @@ fun GameTitle(
         // FLOAT (ниже остальных)
         GradientOutlinedText(
             text = "FLOAT",
-            modifier = Modifier.offset(y = 60.dp),
+            modifier = Modifier.offset(y = 70.dp),
             fontSize = 52.sp,
             strokeWidth = 8f,
             gradientColors = listOf(
