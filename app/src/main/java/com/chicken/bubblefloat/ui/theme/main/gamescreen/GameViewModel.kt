@@ -37,7 +37,7 @@ class GameViewModel : ViewModel() {
         val y: Float,
         val width: Float,
         val height: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: GameEngine.ObstacleType
     )
 
@@ -47,7 +47,7 @@ class GameViewModel : ViewModel() {
         val y: Float,
         val width: Float,
         val height: Float,
-        val hitboxScale: Float,
+        val hitboxSize: Float,
         val type: GameEngine.CollectibleType
     )
 
@@ -123,7 +123,7 @@ class GameViewModel : ViewModel() {
         y = y,
         width = width,
         height = height,
-        hitboxScale = hitboxScale,
+        hitboxSize = hitboxSize,
         type = type
     )
 
@@ -133,7 +133,7 @@ class GameViewModel : ViewModel() {
         y = y,
         width = width,
         height = height,
-        hitboxScale = hitboxScale,
+        hitboxSize = hitboxSize,
         type = type
     )
 
