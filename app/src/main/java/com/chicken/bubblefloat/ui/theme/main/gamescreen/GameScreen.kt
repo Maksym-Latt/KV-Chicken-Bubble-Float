@@ -472,7 +472,7 @@ private fun GamePlayfield(
         modifier = Modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(30.dp))
-            .background(Color(0x66FFFFFF))
+            .background(Color(0x00ffffff))
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
@@ -714,28 +714,6 @@ private fun GamePlayfield(
             },
             contentAlignment = Alignment.Center
         ) {
-            if (auraAlpha > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            alpha = auraAlpha
-                            scaleX = auraScale
-                            scaleY = auraScale
-                        }
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0x66FFF2FF),
-                                    Color(0x55C3F1FF),
-                                    Color.Transparent
-                                ),
-                                center = Offset(0.5f, 0.5f)
-                            )
-                        )
-                )
-            }
-
             PlayerSprite(
                 modifier = Modifier.fillMaxSize(),
                 skinId = playerSkinId
